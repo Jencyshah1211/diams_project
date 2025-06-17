@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Diams</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+  </head>
+  <body>
+    <!-- Navbar -->
+    <!-- NAVBAR WRAPPER -->
+    <nav class="navbar-wrapper">
+      <!-- Top row: logo + login/cart/wishlist -->
+      <div class="navbar-top">
+        <!-- Left: Logo -->
+        <div class="top-left">
+          <a href="/" class="logo-block">
+            <img
+              src="{{ url_for('static', filename='images/diams1.png') }}"
+              alt="Diams Logo"
+            />
+          </a>
+          <a class="search-box">
+            <input type="text" class="search-input" placeholder="🔍 Search" />
+          </a>
+        </div>
+
+        <!-- Center: Brand -->
+        <div class="top-center">
+          <div class="brand-name">D'IAMS</div>
+        </div>
+
+        <!-- Right: Search + Links -->
+        <div class="top-right">
+          <a href="/wishlist">♡ Wishlist</a>
+          <a href="/cart">🛍️ Cart</a>
+          <a href="/login">👤 Login</a>
+        </div>
+      </div>
+
+      <!-- Bottom row: main nav links -->
+      <div class="navbar-bottom">
+        <div class="dropdown">
+          <a
+            href="/diamonds"
+            class="{% if request.path.startswith('/diamonds') %}active{% endif %}"
+          >
+            DIAMONDS
+          </a>
+          <div class="dropdown-content">
+            <a href="/diamonds/filter?type=natural">Natural Diamonds</a>
+            <a href="/diamonds/filter?type=lab">Lab-Grown Diamonds</a>
+            <a href="/diamonds/filter/top-deals">Top Deals</a>
+            <a href="/diamonds/filter/create-demand">Create Demand</a>
+          </div>
+        </div>
+        <div class="dropdown">
+          <a
+            href="/jewelry"
+            class="{% if request.path.startswith('/jewelry') %}active{% endif %}"
+          >
+            JEWELLERY
+          </a>
+          <div class="dropdown-content">
+            <a href="/diamonds/filter=natural-diamonds">Rings</a>
+            <a href="/diamonds/filter=lab-grown-diamonds">Earrings</a>
+            <a href="/diamonds/filter=top-deals">Pendants</a>
+            <a href="/diamonds/filter=create-demand">Bracelet</a>
+            <a href="/diamonds/filter=create-demand">Bangles</a>
+          </div>
+        </div>
+
+        <a
+          href="/education"
+          class="{% if request.path == '/education' %}active{% endif %}"
+          >DIAMOND EDUCATION</a
+        >
+        <a
+          href="/franchise"
+          class="{% if request.path == '/franchise' %}active{% endif %}"
+          >FRANCHISE WITH US</a
+        >
+        <a
+          href="/about"
+          class="{% if request.path == '/about' %}active{% endif %}"
+          >ABOUT US</a
+        >
+      </div>
+    </nav>
+
+    <main>{% block content %}{% endblock %}</main>
+    <footer>
+      <p>
+        <a href="#">Terms of Use</a> | <a href="#">Privacy Policy</a> |
+        <a href="#">Return & Exchange Policy</a> |
+        <a href="#">Shipping Policy</a>
+      </p>
+      <p>Customer Support: support@diams.com | +91 1234567890</p>
+      <p>
+        Follow us: <a href="#">Facebook</a> <a href="#">Instagram</a>
+        <a href="#">YouTube</a>
+      </p>
+    </footer>
+  </body>
+</html>

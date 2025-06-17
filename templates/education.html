@@ -1,0 +1,145 @@
+{% extends "base.html" %} {% block content %}
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+/>
+
+<section class="diamond-hero">
+  <h1>DIAMOND EDUCATION</h1>
+  <p>
+    Diamond education is essential to understand the characteristics and quality
+    aspects of diamonds. Through our Diamond education page, we aim to demystify
+    these concepts and explain their influence on buying decisions, with the
+    help of informative articles, guides and videos.
+  </p>
+
+  <div class="diamond-types">
+    <div class="diamond-box natural">
+      <div class="diamond-info">
+        <h2>NATURAL DIAMONDS</h2>
+        <p>Marvel of Nature, Classic & Spectacular</p>
+        <a href="#" class="read-btn">Read More</a>
+      </div>
+    </div>
+
+    <div class="diamond-box lab">
+      <div class="diamond-info">
+        <h2>LAB-GROWN DIAMONDS</h2>
+        <p>Created Sustainably, Crafted Impeccably</p>
+        <a href="#" class="read-btn">Read More</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Education Tiles -->
+<section class="education-cards">
+  <div class="tile-grid">
+    <a href="javascript:void(0);" class="tile" onclick="loadSection('5cs')">
+      <i class="fas fa-gem fa-2x"></i>
+      <span>The 5Cs Explained</span>
+    </a>
+    <a
+      href="javascript:void(0);"
+      class="tile"
+      onclick="loadSection('fancy-shapes')"
+    >
+      <i class="fas fa-draw-polygon fa-2x"></i>
+      <span>Fancy Shapes</span>
+    </a>
+    <a
+      href="javascript:void(0);"
+      class="tile"
+      onclick="loadSection('fancy-colors')"
+    >
+      <i class="fas fa-palette fa-2x"></i>
+      <span>Fancy Colors</span>
+    </a>
+    <a
+      href="javascript:void(0);"
+      class="tile"
+      onclick="loadSection('fluorescence')"
+    >
+      <i class="fas fa-lightbulb fa-2x"></i>
+      <span>Fluorescence</span>
+    </a>
+    <a
+      href="javascript:void(0);"
+      class="tile"
+      onclick="loadSection('certification')"
+    >
+      <i class="fas fa-certificate fa-2x"></i>
+      <span>Certification</span>
+    </a>
+    <a
+      href="javascript:void(0);"
+      class="tile"
+      onclick="loadSection('polish-symmetry')"
+    >
+      <i class="fas fa-tools fa-2x"></i>
+      <span>Polish & Symmetry</span>
+    </a>
+    <a
+      href="javascript:void(0);"
+      class="tile"
+      onclick="loadSection('buying-guide')"
+    >
+      <i class="fas fa-book-open fa-2x"></i>
+      <span>Buying Guide</span>
+    </a>
+    <a
+      href="javascript:void(0);"
+      class="tile"
+      onclick="loadSection('size-chart')"
+    >
+      <i class="fas fa-ruler-combined fa-2x"></i>
+      <span>Size Chart</span>
+    </a>
+  </div>
+</section>
+
+<!-- Section to update dynamically -->
+<section id="education-content">{% include "education/5cs.html" %}</section>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const tiles = document.querySelectorAll(".tile");
+
+    window.loadSection = function (section) {
+      fetch(`/education/section/${section}`)
+        .then((response) => {
+          if (!response.ok) throw new Error("Failed to load section.");
+          return response.text();
+        })
+        .then((html) => {
+          document.getElementById("education-content").innerHTML = html;
+
+          // Update URL without reloading
+          window.history.pushState({ section }, "", `/education/${section}`);
+
+          // Toggle active class
+          tiles.forEach((t) => t.classList.remove("active"));
+          document
+            .querySelector(`.tile[onclick*="${section}"]`)
+            ?.classList.add("active");
+        })
+        .catch((err) => {
+          document.getElementById("education-content").innerHTML =
+            "<p>Could not load content.</p>";
+        });
+    };
+
+    // Support back/forward buttons
+    window.addEventListener("popstate", function (event) {
+      const section = event.state?.section || "5cs";
+      loadSection(section);
+    });
+
+    // On initial load, match section from URL
+    const pathMatch = window.location.pathname.match(/\/education\/([\w-]+)/);
+    const initialSection = pathMatch ? pathMatch[1] : "5cs";
+    loadSection(initialSection);
+  });
+</script>
+
+{% endblock %}

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Buyer Signup Form</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f8f9fa;
+        padding: 2rem;
+      }
+      form {
+        max-width: 800px;
+        margin: 0 auto;
+        background: #fff;
+        padding: 2rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+      h2 {
+        text-align: center;
+        color: #6b21a8;
+      }
+      .grid {
+        display: grid;
+        gap: 1rem;
+      }
+      .grid-2 {
+        grid-template-columns: 1fr 1fr;
+      }
+      .grid-3 {
+        grid-template-columns: 1fr 1fr 1fr;
+      }
+      label {
+        display: block;
+        margin-bottom: 0.3rem;
+        font-weight: bold;
+      }
+      input,
+      select {
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+      .checkbox {
+        display: flex;
+        align-items: center;
+      }
+      .checkbox input {
+        width: auto;
+        margin-right: 0.5rem;
+      }
+      .button {
+        background-color: #6b21a8;
+        color: white;
+        padding: 0.7rem 1.5rem;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        text-transform: uppercase;
+        font-weight: bold;
+      }
+      .button:hover {
+        background-color: #581c87;
+      }
+      .note {
+        text-align: center;
+        margin-top: 1rem;
+      }
+      .error {
+        color: red;
+        font-size: 0.85rem;
+      }
+    </style>
+  </head>
+  <body>
+    <form>
+      <h2>Create Your Account</h2>
+
+      <div class="grid grid-2">
+        <div>
+          <label for="firstName">First Name *</label>
+          <input type="text" id="firstName" name="firstName" required />
+        </div>
+        <div>
+          <label for="lastName">Last Name *</label>
+          <input type="text" id="lastName" name="lastName" required />
+        </div>
+      </div>
+
+      <div class="grid grid-2">
+        <div>
+          <label for="phone">Mobile Number (For Login) *</label>
+          <input type="tel" id="phone" name="phone" required />
+        </div>
+        <div>
+          <label for="email">Login Email Address *</label>
+          <input type="email" id="email" name="email" required />
+        </div>
+      </div>
+
+      <div class="grid grid-2">
+        <div>
+          <label for="password">Login Password *</label>
+          <input type="password" id="password" name="password" required />
+        </div>
+        <div>
+          <label for="confirmPassword">Confirm Password *</label>
+          <input
+            type="password"
+            id="confirmPassword"
+            name="confirmPassword"
+            required
+          />
+        </div>
+      </div>
+
+      <div class="grid grid-3">
+        <div>
+          <label for="country">Select Country *</label>
+          <select id="country" name="country" required>
+            <option value="">Select Country</option>
+            <option value="in">India</option>
+            <option value="us">United States</option>
+            <option value="uk">United Kingdom</option>
+          </select>
+        </div>
+        <div>
+          <label for="state">Select State *</label>
+          <select id="state" name="state" required>
+            <option value="">Select State</option>
+            <option value="mh">Maharashtra</option>
+            <option value="dl">Delhi</option>
+            <option value="gj">Gujarat</option>
+          </select>
+        </div>
+        <div>
+          <label for="city">Select City *</label>
+          <select id="city" name="city" required>
+            <option value="">Select City</option>
+            <option value="mumbai">Mumbai</option>
+            <option value="delhi">Delhi</option>
+            <option value="surat">Surat</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid grid-2">
+        <div>
+          <label for="pincode">Enter Pincode</label>
+          <input type="text" id="pincode" name="pincode" />
+        </div>
+        <div>
+          <label for="address">Address *</label>
+          <input type="text" id="address" name="address" required />
+        </div>
+      </div>
+
+      <div>
+        <label for="referralCode">Referral Code</label>
+        <input type="text" id="referralCode" name="referralCode" />
+      </div>
+
+      <div class="checkbox">
+        <input type="checkbox" id="agreeToTerms" name="agreeToTerms" required />
+        <label for="agreeToTerms"
+          >I Agree to the DiamondXE <a href="#">Terms & Conditions</a></label
+        >
+      </div>
+
+      <div style="margin-top: 1rem">
+        <button type="submit" class="button">Create Account</button>
+      </div>
+
+      <p class="note">Already have an account? <a href="#">Login!</a></p>
+    </form>
+  </body>
+</html>

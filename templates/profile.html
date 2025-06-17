@@ -1,0 +1,189 @@
+{% extends "base.html" %} {% block content %}
+
+<section class="hero">
+  <h1>Your Gateway to Diamonds</h1>
+</section>
+
+<section class="auth-container">
+  {% if logged_in %}
+  <div class="profile-layout">
+    <aside class="sidebar">
+      <p><strong>John Doe</strong><br />Premium Member</p>
+      <ul>
+        <li><a href="#">Profile</a></li>
+        <li><a href="#">Orders</a></li>
+        <li><a href="#">Payment Methods</a></li>
+        <li><a href="#">Sign Out</a></li>
+      </ul>
+    </aside>
+    <div class="profile-form">
+      <form>
+        <h3>Personal Info</h3>
+        <input type="text" placeholder="First Name" value="John" />
+        <input type="text" placeholder="Last Name" value="Doe" />
+        <input type="email" placeholder="Email" value="john.doe@example.com" />
+        <input type="tel" placeholder="Phone" value="+1 555-123-4567" />
+        <h3>Shipping Address</h3>
+        <input
+          type="text"
+          placeholder="Street Address"
+          value="123 Main Street"
+        />
+        <input type="text" placeholder="City" value="New York" />
+        <input type="text" placeholder="State" value="NY" />
+        <input type="text" placeholder="ZIP" value="10001" />
+        <input type="text" placeholder="Country" value="USA" />
+        <button type="submit" class="btn">Save Changes</button>
+      </form>
+    </div>
+  </div>
+  {% else %}
+  <!-- Login/Signup Section -->
+  <div class="auth-content auth-flex-container">
+    <!-- Login Form -->
+    <!-- Login Form with Tabs -->
+    <div class="login-box">
+      <h2>LOGIN</h2>
+      <div class="login-tabs">
+        <button type="button" class="tab active" onclick="showTab('email')">
+          Using Email
+        </button>
+        <button type="button" class="tab" onclick="showTab('mobile')">
+          Using Mobile OTP
+        </button>
+      </div>
+
+      <!-- Email Login Form -->
+      <form id="emailForm" method="POST" action="{{ url_for('login') }}">
+        <label>Email Address *</label>
+        <input
+          type="email"
+          name="email"
+          placeholder="Enter Email Address"
+          required
+        />
+        <label>Password *</label>
+        <input
+          type="password"
+          name="password"
+          placeholder="Enter Your Password"
+          required
+        />
+        <div class="form-options">
+          <div class="checkbox-container">
+            <input type="checkbox" id="remember" />
+            <label for="remember">Remember me</label>
+          </div>
+          <a href="{{ url_for('logout') }}">Forgot Password?</a>
+        </div>
+        <button type="submit" class="btn-primary">LOGIN TO CONTINUE</button>
+      </form>
+
+      <!-- Mobile OTP Login Form (initially hidden) -->
+      <!-- Mobile OTP Login Form (initially hidden) -->
+      <form
+        id="mobileForm"
+        method="POST"
+        action="{{ url_for('login') }}"
+        style="display: none"
+      >
+        <label>Mobile Number *</label>
+        <input
+          type="text"
+          name="mobile"
+          id="mobileInput"
+          placeholder="1234567890"
+          required
+        />
+
+        <div id="otpSection" style="display: none">
+          <label>OTP *</label>
+          <input
+            type="text"
+            name="otp"
+            placeholder="Enter 6-digit OTP"
+            required
+          />
+          <div class="form-options">
+            <div class="checkbox-container">
+              <input type="checkbox" id="remember" />
+              <label for="remember">Remember me</label>
+            </div>
+            <a href="#" class="resend-link">Resend OTP</a>
+          </div>
+          <button type="submit" class="btn-primary">LOGIN TO CONTINUE</button>
+        </div>
+
+        <button type="button" class="btn-primary" id="sendOtpBtn">
+          SEND OTP
+        </button>
+      </form>
+    </div>
+
+    <!-- Vertical Divider -->
+    <div class="vertical-line"></div>
+
+    <!-- Signup Box -->
+    <div class="signup-box">
+      <h2>SIGNUP</h2>
+      <p>New User? Create Your Diams Account for FREE</p>
+      <p>
+        Creating an account is simple and fast. Just click the button below.
+        Once it's set up, you can take advantage of all the benefits of Diams.
+      </p>
+      <a href="/signup/guest" class="btn-primary">Guest User</a>
+      <a href="/signup/jeweller" class="btn-primary">Jeweller</a>
+      <a href="/signup/supplier" class="btn-primary">Supplier</a>
+    </div>
+  </div>
+  {% endif %}
+</section>
+
+{% block scripts %}
+<script>
+  function showTab(tab) {
+    const emailForm = document.getElementById("emailForm");
+    const mobileForm = document.getElementById("mobileForm");
+    const tabs = document.querySelectorAll(".login-tabs .tab");
+
+    tabs.forEach((t) => t.classList.remove("active"));
+
+    if (tab === "email") {
+      emailForm.style.display = "block";
+      mobileForm.style.display = "none";
+      tabs[0].classList.add("active");
+    } else {
+      emailForm.style.display = "none";
+      mobileForm.style.display = "block";
+      tabs[1].classList.add("active");
+      resetMobileForm();
+    }
+  }
+
+  function resetMobileForm() {
+    document.getElementById("otpSection").style.display = "none";
+    document.getElementById("sendOtpBtn").style.display = "block";
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const sendOtpBtn = document.getElementById("sendOtpBtn");
+    const mobileInput = document.getElementById("mobileInput");
+
+    sendOtpBtn?.addEventListener("click", () => {
+      const mobileNumber = mobileInput.value.trim();
+
+      if (!/^\d{10}$/.test(mobileNumber)) {
+        alert("Please enter a valid 10-digit mobile number.");
+        return;
+      }
+
+      // Show OTP input and login button
+      document.getElementById("otpSection").style.display = "block";
+      sendOtpBtn.style.display = "none";
+
+      // Optional: Call backend to send OTP here
+    });
+  });
+</script>
+
+{% endblock %} {% endblock %}

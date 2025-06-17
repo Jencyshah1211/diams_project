@@ -1,0 +1,71 @@
+{% extends "base.html" %} {% block content %}
+<section class="franchise-page">
+  <!-- Header Section -->
+  <div class="page-header">
+    <h1>Franchise Opportunities</h1>
+    <p>
+      Join our growing family and bring the brilliance of diamonds to your city.
+    </p>
+  </div>
+
+  <!-- Franchise Form -->
+  <div class="franchise-form-container">
+    <h2>Submit Your Inquiry</h2>
+    <form method="POST" action="/franchise" class="franchise-form">
+      <div class="form-group">
+        <label for="name">Full Name</label>
+        <input
+          type="text"
+          id="name"
+          name="name"
+          placeholder="Your Name"
+          required
+        />
+      </div>
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input
+          type="email"
+          id="email"
+          name="email"
+          placeholder="Your Email"
+          required
+        />
+      </div>
+      <div class="form-group">
+        <label for="phone">Phone Number</label>
+        <input
+          type="tel"
+          id="phone"
+          name="phone"
+          placeholder="+1 555-123-4567"
+          required
+        />
+      </div>
+      <div class="form-group">
+        <label for="city">City</label>
+        <input
+          type="text"
+          id="city"
+          name="city"
+          placeholder="Your City"
+          required
+        />
+      </div>
+      <div class="form-group">
+        <label for="message">Message</label>
+        <textarea
+          id="message"
+          name="message"
+          placeholder="Tell us about your interest in franchising"
+          rows="5"
+          required
+        ></textarea>
+      </div>
+      <div class="form-group button-group">
+        <button type="submit" class="submit-btn">Submit Inquiry</button>
+      </div>
+    </form>
+  </div>
+</section>
+{% endblock %}

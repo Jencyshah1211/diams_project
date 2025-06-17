@@ -1,0 +1,61 @@
+{% extends "base.html" %} {% block content %}
+<section class="page">
+  <h2>Shopping Cart</h2>
+  <div class="cart-layout">
+    <div class="cart-items">
+      <div class="cart-item">
+        <img
+          src="https://images.unsplash.com/photo-1600267185393-e158a98703de?auto=format&fit=crop&q=80"
+          alt="Diamond"
+        />
+        <div class="item-details">
+          <p>
+            <strong>Round Brilliant Diamond</strong><br />1.01 ct, D Color, VS1
+            Clarity
+          </p>
+          <div class="item-controls">
+            <span class="delete">🗑️</span>
+            <label
+              >Quantity
+              <select>
+                <option>1</option>
+              </select>
+            </label>
+          </div>
+        </div>
+        <p class="price">$12,500</p>
+      </div>
+
+      <div class="cart-item">
+        <img
+          src="https://images.unsplash.com/photo-1590548784585-643d2b9f2925?auto=format&fit=crop&q=80"
+          alt="Ring"
+        />
+        <div class="item-details">
+          <p><strong>Classic Solitaire Ring</strong><br />18K White Gold</p>
+          <div class="item-controls">
+            <span class="delete">🗑️</span>
+            <label
+              >Quantity
+              <select>
+                <option>1</option>
+              </select>
+            </label>
+          </div>
+        </div>
+        <p class="price">$2,999</p>
+      </div>
+    </div>
+
+    <div class="cart-summary">
+      <h4>Order Summary</h4>
+      <p>Subtotal <span>$15,499</span></p>
+      <p>Tax (8%) <span>$1,239.92</span></p>
+      <p>Shipping <span>$50</span></p>
+      <hr />
+      <p class="total">Total <span>$16,788.92</span></p>
+      <a href="#" class="btn">🧾 Proceed to Checkout</a>
+    </div>
+  </div>
+</section>
+{% endblock %}
