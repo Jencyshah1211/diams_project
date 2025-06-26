@@ -50,8 +50,8 @@ body {
 }
 
 .logo-block img {
-  width: 60px;
-  height: 60px;
+  width: 70px;
+  height: 70px;
   object-fit: cover;
   border-radius: 50%;
   box-shadow: 0 0 8px rgba(0, 0, 0, 0.15);
@@ -261,16 +261,16 @@ body {
     color: #6b7280;
   }
   
-  /* Diamond Page */
+/* Diamond Page */
 
-  .diamond-grid,
-  .jewelry-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 24px;
-    margin-top: 30px;
-  }
-  
+.diamond-grid,
+.jewelry-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 24px;
+  margin-top: 30px;
+}
+
 /* Diamond Page - Modern Filters Revamp */
 
 /* Tab Buttons for Natural/Lab Grown */
@@ -278,10 +278,10 @@ body {
   display: flex;
   justify-content: center;
   margin-bottom: 2.5rem;
-  background: rgba(255, 255, 255, 0.1); /* Semi-transparent container */
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   padding: 0.5rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); /* Subtle shadow */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .type-toggle button {
@@ -289,27 +289,28 @@ body {
   padding: 1rem 2rem;
   border: none;
   background: transparent;
-  color: #2c3e50; /* Deep navy for text */
+  color: #2c3e50;
   font-weight: 700;
   font-size: 1.1rem;
   cursor: pointer;
   border-radius: 10px;
   position: relative;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); /* Smooth, elastic transition */
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .type-toggle button.active {
-  background: linear-gradient(90deg, #4b6cb7, #182848); /* Gradient for active state */
+  background: linear-gradient(90deg, #4b6cb7, #182848);
   color: #fff;
-  box-shadow: 0 4px 16px rgba(75, 108, 183, 0.4); /* Glowing shadow */
-  transform: scale(1.02); /* Slight scale-up for emphasis */
+  box-shadow: 0 4px 16px rgba(75, 108, 183, 0.4);
+  transform: scale(1.02);
 }
 
 .type-toggle button:hover:not(.active) {
-  background: rgba(75, 108, 183, 0.1); /* Light hover effect */
+  background: rgba(75, 108, 183, 0.1);
   color: #4b6cb7;
-  transform: translateY(-2px); /* Subtle lift */
+  transform: translateY(-2px);
 }
+
 /* Diamond Page - Modern Form Filters */
 
 /* Main Filters Container */
@@ -324,9 +325,12 @@ body {
 
 /* Filter Container */
 .filter-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: 1.5rem;
+  position: relative;
+  padding-bottom: 60px;
+  width: 100%; /* Ensure full width for button alignment */
 }
 
 /* Toggle Buttons for Natural/Lab Grown */
@@ -366,26 +370,34 @@ body {
 
 /* Filter Row */
 .filter-row {
-  margin-bottom: 1.5rem;
   display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  flex-direction: row;
+  align-items: flex-start; /* Align items at the top for better spacing */
+  gap: 1rem;
+  margin-bottom: 1.5rem; /* Increased for better separation */
+  flex-wrap: wrap;
 }
 
 /* Labels */
+.filter-row.compact-group label,
 .filter-row label {
   font-weight: 600;
   color: #2d3748;
   font-size: 1rem;
   letter-spacing: 0.02em;
-  margin-bottom: 0.5rem;
+  margin-bottom: 1rem; /* Increased spacing below label as requested */
+ 
+  min-width: 80px;
+  flex-shrink: 0; /* Prevent label from shrinking */
 }
 
 /* Shape Buttons */
 .shape-filter .shape-buttons {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: row;
   gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
 .shape-btn {
@@ -430,12 +442,13 @@ body {
 /* Range Filters (Carat, Price) */
 .range-filter .range-inputs {
   display: flex;
+  flex-direction: row;
   gap: 1rem;
-  margin-bottom: 0.5rem;
+  align-items: center;
 }
 
 .range-filter input[type="number"] {
-  width: 100%;
+  width: 100px;
   padding: 0.5rem;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
@@ -453,7 +466,7 @@ body {
 
 .slider-container {
   position: relative;
-  width: 100%;
+  width: 200px;
 }
 
 .range-slider {
@@ -485,7 +498,7 @@ body {
 
 /* Input Fields */
 .filter-row input[type="text"] {
-  width: 100%;
+  width: 150px;
   padding: 0.5rem;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
@@ -512,6 +525,7 @@ body {
   font-weight: 500;
   font-size: 0.9rem;
   transition: all 0.3s ease;
+  margin-right: 0.5rem;
 }
 
 .filter-row button:hover:not(.active) {
@@ -530,49 +544,86 @@ body {
 /* Color Buttons Container */
 .color-buttons {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: row;
   gap: 0.5rem;
-  margin-top: 0.5rem;
+  align-items: center;
 }
 
 /* Search and Clear Buttons */
-.button-group {
+.button-row {
   display: flex;
   gap: 1rem;
-  justify-content: center;
+  margin-top: 2rem;
+  flex-wrap: wrap;
   flex-direction: row !important;
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 100%; /* Ensure it spans the container */
+  padding-right: 10px;
 }
 
-.search-btn {
-  background: #1a73e8; /* Solid blue color from DiamondXE */
-  color: #fff;
-  border: none;
-  box-shadow: 0 2px 8px rgba(26, 115, 232, 0.2); /* Softer shadow */
-}
-
-.search-btn:hover {
-  background: #1557b0; /* Darker blue on hover */
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(26, 115, 232, 0.3); /* Slightly stronger shadow on hover */
-}
-
+.search-btn,
 .clear-btn {
-  background: transparent;
-  border: 1px solid #d1d5db; /* Thin gray border */
-  color: #4b5e77; /* Gray text */
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  border-radius: 8px;
+  border: none;
+  background: linear-gradient(90deg, #4b6cb7, #182848);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(75, 108, 183, 0.3);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 120px;
+  width: auto;
 }
 
+.search-btn:hover,
 .clear-btn:hover {
-  background: #f1f3f5; /* Light gray background on hover */
+  background: rgba(75, 108, 183, 0.1);
+  color: #4b6cb7;
   transform: translateY(-2px);
-  border-color: #b0b7c3; /* Slightly darker border on hover */
 }
 
 /* Hidden Form */
 .filter-form.hidden {
   display: none;
 }
+.filter-container {
+  position: relative;
+  padding-bottom: 60px;
+  min-height: 500px;
+}
 
+/* Group Smaller Fields Side by Side */
+.filter-row.compact-group {
+  flex-wrap: nowrap;
+  gap : 4rem;
+}
+
+.filter-row.compact-group .range-inputs,
+.filter-row.compact-group .color-buttons {
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+   margin-left: 1rem;
+  align-items: center;
+}
+
+.filter-row.compact-group input[type="number"],
+.filter-row.compact-group button {
+  margin-right: 0.5rem;
+  flex-shrink: 0;
+}
+
+/* Ensure consistent spacing for options */
+.filter-row .button-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding-top: 0.5rem; /* Uniform spacing above options */
+}
 /* Diamond Grid */
 .diamond-grid {
   display: grid;
