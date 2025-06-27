@@ -6,6 +6,9 @@
 </section>
 
 <section class="features">
+  {% if session['user'] and session['name'] %}
+  <h2 style="text-align: center">Hi, {{ session['name'] }}!</h2>
+  {% endif %}
   <h2 style="text-align: center">Why Choose Diams?</h2>
   <div class="grid">
     <div class="feature">
