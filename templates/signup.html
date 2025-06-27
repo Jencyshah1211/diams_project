@@ -1,5 +1,8 @@
 {% extends "base.html" %} {% block content %}
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<link
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+  rel="stylesheet"
+/>
 
 <section class="signup-section">
   <h2>Select Your Account Type</h2>
@@ -10,38 +13,35 @@
       class="user-type-box {% if user_type == 'buyer' %}selected{% endif %}"
       data-type="buyer"
     >
-     <div class="icon-circle">
-      <i class="fas fa-shopping-cart fa-2x"></i>
-    </div>
+      <div class="icon-circle">
+        <i class="fas fa-shopping-cart fa-2x"></i>
+      </div>
       <h3>Buyer (Consumer)</h3>
-     
       <p>Search, Add To Your Cart And Buy Any Diamonds</p>
     </div>
     <div
       class="user-type-box {% if user_type == 'jeweller' %}selected{% endif %}"
       data-type="jeweller"
     >
-     <div class="icon-circle">
-      <i class="fas fa-user-tag fa-2x my-icon"></i>
-    </div>
+      <div class="icon-circle">
+        <i class="fas fa-user-tag fa-2x my-icon"></i>
+      </div>
       <h3>Dealer (Jeweller/Trader)</h3>
-     
       <p>Register And Get Prices At Additional Discounts</p>
     </div>
     <div
       class="user-type-box {% if user_type == 'supplier' %}selected{% endif %}"
       data-type="supplier"
     >
-    <div class="icon-circle">
-      <i class="fas fa-gem fa-2x my-icon"></i>
-    </div>
+      <div class="icon-circle">
+        <i class="fas fa-gem fa-2x my-icon"></i>
+      </div>
       <h3>Supplier (Manufacturer)</h3>
-     
       <p>Upload Your Stock And Sell On The Platform</p>
     </div>
   </div>
 
-  <form id="signupForm" method="POST">
+  <form id="signupForm" method="POST" enctype="multipart/form-data">
     <input
       type="hidden"
       name="user_type"
@@ -71,76 +71,78 @@
           <input type="text" name="last_name" required />
         </div>
       </div>
-<div class="form-row">
-      <div class="form-group">
-        <label>Mobile Number *</label>
-        <div class="mobile-input">
-          <select name="country_code">
-            <option value="+91">🇮🇳 +91</option>
-            <option value="+1">🇺🇸 +1</option>
-            <!-- Add more country codes -->
-          </select>
-          <input
-            type="tel"
-            name="mobile_number"
-            placeholder="Enter Mobile"
-            required
-          />
+      <div class="form-row">
+        <div class="form-group">
+          <label>Mobile Number *</label>
+          <div class="mobile-input">
+            <select name="country_code">
+              <option value="+91">🇮🇳 +91</option>
+            </select>
+            <input
+              type="tel"
+              name="mobile_number"
+              placeholder="Enter Mobile"
+              required
+            />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Email *</label>
+          <input type="email" name="email" placeholder="Enter Email" required />
         </div>
       </div>
-
-      <div class="form-group">
-        <label>Email *</label>
-        <input type="email" name="email" placeholder="Enter Email" required />
-      </div></div>
-
       <div class="form-row">
-        <div  class="form-group password-wrapper">
+        <div class="form-group password-wrapper">
           <label>Password *</label>
           <input
-           id="password"
+            id="password_buyer"
             type="password"
             name="password"
             placeholder="Password"
             required
           />
-          <i class="fas fa-eye toggle-password" onclick="togglePassword('password', this)"></i>
+          <i class="fas fa-eye toggle-password"></i>
         </div>
-        <div  class="form-group password-wrapper">
+        <div class="form-group password-wrapper">
           <label>Confirm Password *</label>
           <input
-          id = "confirm_password"
+            id="confirm_password_buyer"
             type="password"
             name="confirm_password"
             placeholder="Confirm Password"
             required
-          />  <i class="fas fa-eye toggle-password" onclick="togglePassword('confirm_password', this)"></i>
-
+          />
+          <i class="fas fa-eye toggle-password"></i>
         </div>
       </div>
-
       <div class="form-row">
         <div class="form-group">
           <label>Country *</label>
-          <select id="country" name="country" required></select>
+          <select id="country" name="country" required>
+            <option value="India">India</option>
+          </select>
         </div>
         <div class="form-group">
           <label>State *</label>
-          <select id="state" name="state" required></select>
+          <select id="state" name="state" required>
+            <option value="">Select State</option>
+            <option value="Gujarat">Gujarat</option>
+            <option value="Maharashtra">Maharashtra</option>
+          </select>
         </div>
         <div class="form-group">
           <label>City *</label>
-          <select id="city" name="city" required></select>
+          <select id="city" name="city" required>
+            <option value="">Select City</option>
+          </select>
         </div>
       </div>
-
       <div class="form-row">
         <div class="form-group">
           <label>Pincode</label>
           <input type="text" name="pincode" placeholder="Enter Pincode" />
         </div>
       </div>
-
       <div class="form-group">
         <label>Address *</label>
         <input
@@ -150,20 +152,17 @@
           required
         />
       </div>
-
-     
       <div class="checkbox-container">
-        <input type="checkbox" id="agree" />
-        <label for="agree"
+        <input type="checkbox" id="agree_buyer" name="agree" required />
+        <label for="agree_buyer"
           >I Agree to the Diams <a href="#">Terms & Conditions</a></label
         >
       </div>
-
       <button type="submit" class="btn-primary">Create Account</button>
       <p>Already have an account? <a href="/login">Login!</a></p>
     </div>
 
-    <!-- Dealer & Supplier fields (simplified) -->
+    <!-- Jeweller Fields -->
     <div
       class="user-fields jeweller-fields"
       {%
@@ -201,7 +200,6 @@
         <div class="mobile-input">
           <select name="company_country_code">
             <option value="+91">🇮🇳 +91</option>
-            <option value="+1">🇺🇸 +1</option>
           </select>
           <input
             type="tel"
@@ -211,19 +209,26 @@
           />
         </div>
       </div>
-
       <div class="form-row">
         <div class="form-group">
           <label>Country *</label>
-          <select id="dealer_country" name="dealer_country" required></select>
+          <select id="dealer_country" name="dealer_country" required>
+            <option value="India">India</option>
+          </select>
         </div>
         <div class="form-group">
           <label>State *</label>
-          <select id="dealer_state" name="dealer_state" required></select>
+          <select id="dealer_state" name="dealer_state" required>
+            <option value="">Select State</option>
+            <option value="Gujarat">Gujarat</option>
+            <option value="Maharashtra">Maharashtra</option>
+          </select>
         </div>
         <div class="form-group">
           <label>City *</label>
-          <select id="dealer_city" name="dealer_city" required></select>
+          <select id="dealer_city" name="dealer_city" required>
+            <option value="">Select City</option>
+          </select>
         </div>
       </div>
       <div class="form-row">
@@ -267,7 +272,6 @@
           </select>
         </div>
       </div>
-
       <h2 class="form-section-title">Company KYC</h2>
       <div class="form-row">
         <div class="form-group">
@@ -306,55 +310,54 @@
         </div>
       </div>
       <div class="form-row">
-      <div class="form-group">
-        <label>Mobile Number (For Login) *</label>
-        <div class="mobile-input">
-          <select name="login_country_code">
-            <option value="+91">🇮🇳 +91</option>
-            <option value="+1">🇺🇸 +1</option>
-          </select>
+        <div class="form-group">
+          <label>Mobile Number (For Login) *</label>
+          <div class="mobile-input">
+            <select name="login_country_code">
+              <option value="+91">🇮🇳 +91</option>
+            </select>
+            <input
+              type="tel"
+              name="login_mobile"
+              placeholder="Enter Mobile Number"
+              required
+            />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Login Email Address *</label>
           <input
-            type="tel"
-            name="login_mobile"
-            placeholder="Enter Mobile Number"
+            type="email"
+            name="login_email"
+            placeholder="Enter Email"
             required
           />
         </div>
       </div>
-      <div class="form-group">
-        <label>Login Email Address *</label>
-        <input
-          type="email"
-          name="login_email"
-          placeholder="Enter Email"
-          required
-        />
-      </div></div>
       <div class="form-row">
-        <div  class="form-group password-wrapper">
+        <div class="form-group password-wrapper">
           <label>Login Password *</label>
           <input
-           id="password"
+            id="password_buyer"
             type="password"
             name="password"
             placeholder="Password"
             required
           />
-          <i class="fas fa-eye toggle-password" onclick="togglePassword('password', this)"></i>
+          <i class="fas fa-eye toggle-password"></i>
         </div>
-        <div  class="form-group password-wrapper">
+        <div class="form-group password-wrapper">
           <label>Confirm Password *</label>
           <input
-           id="confirm_password"
+            id="confirm_password_buyer"
             type="password"
             name="confirm_password"
             placeholder="Confirm Password"
             required
-          />  <i class="fas fa-eye toggle-password" onclick="togglePassword('confirm_password', this)"></i>
-
+          />
+          <i class="fas fa-eye toggle-password"></i>
         </div>
       </div>
-
       <h2 class="form-section-title">Passport & Driving License</h2>
       <div class="form-row">
         <div class="form-group">
@@ -369,7 +372,6 @@
           <label>Upload Passport (Front)</label>
           <input type="file" name="passport_front" />
         </div>
-
         <div class="form-group">
           <label>Upload Passport (Back)</label>
           <input type="file" name="passport_back" />
@@ -393,10 +395,9 @@
           <input type="file" name="driving_license" />
         </div>
       </div>
-     
       <div class="checkbox-container">
-        <input type="checkbox" id="agree_dealer" name="agree" required />
-        <label for="agree_dealer"
+        <input type="checkbox" id="agree_jeweller" name="agree" required />
+        <label for="agree_jeweller"
           >I Agree to the Diams <a href="#">Terms & Conditions</a></label
         >
       </div>
@@ -404,6 +405,7 @@
       <p>Already have an account? <a href="/login">Login!</a></p>
     </div>
 
+    <!-- Supplier Fields -->
     <div
       class="user-fields supplier-fields"
       {%
@@ -415,281 +417,460 @@
       endif
       %}
     >
-    <h2 class="form-section-title">Company Information</h2>
-    <div class="form-row">
-      <div class="form-group">
-        <label>Company Name *</label>
-        <input type="text" name="company_name" placeholder="Enter Company Name" required>
+      <h2 class="form-section-title">Company Information</h2>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Company Name *</label>
+          <input
+            type="text"
+            name="company_name"
+            placeholder="Enter Company Name"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label>Login Email Address *</label>
+          <input
+            type="email"
+            name="login_email"
+            placeholder="Enter Email Address"
+            required
+          />
+        </div>
       </div>
-      <div class="form-group">
-        <label>Login Email Address *</label>
-        <input type="email" name="login_email" placeholder="Enter Email Address" required>
-      </div></div>
       <div class="form-group">
         <label>Login Mobile Number *</label>
         <div class="mobile-input">
           <select name="login_country_code">
             <option value="+91">🇮🇳 +91</option>
-            <option value="+1">🇺🇸 +1</option>
           </select>
-          <input type="tel" name="login_mobile" placeholder="Enter Mobile Number" required>
+          <input
+            type="tel"
+            name="login_mobile"
+            placeholder="Enter Mobile Number"
+            required
+          />
         </div>
-      
-    </div>
-    <div class="form-row">
-     <div  class="form-group password-wrapper">
+      </div>
+      <div class="form-row">
+        <div class="form-group password-wrapper">
           <label>Login Password *</label>
           <input
-           id="password"
+            id="password_buyer"
             type="password"
             name="password"
             placeholder="Password"
             required
           />
-          <i class="fas fa-eye toggle-password" onclick="togglePassword('password', this)"></i>
+          <i class="fas fa-eye toggle-password"></i>
         </div>
-        <div  class="form-group password-wrapper">
+        <div class="form-group password-wrapper">
           <label>Confirm Password *</label>
           <input
-           id="confirm_password"
+            id="confirm_password_buyer"
             type="password"
             name="confirm_password"
             placeholder="Confirm Password"
             required
-          />  <i class="fas fa-eye toggle-password" onclick="togglePassword('confirm_password', this)"></i>
-
+          />
+          <i class="fas fa-eye toggle-password"></i>
         </div>
-      <div class="form-group">
-        <label>Inventory Type *</label>
-        <select name="inventory_type" required>
-          <option value="">Select Inventory Type</option>
-          <!-- Add your options here -->
-        </select>
+        <div class="form-group">
+          <label>Inventory Type *</label>
+          <select name="inventory_type" required>
+            <option value="">Select Inventory Type</option>
+            <option value="Natural Diamonds">Natural Diamonds</option>
+            <option value="Lab-Grown Diamonds">Lab-Grown Diamonds</option>
+            <option value="Jewelry">Jewelry</option>
+          </select>
+        </div>
       </div>
-    </div>
-  
-    <div class="form-row">
-      <div class="form-group">
-        <label>Select Country *</label>
-        <select id="supplier_country" name="country" required></select>
-      </div>
-      <div class="form-group">
-        <label>Select State *</label>
-        <select id="supplier_state" name="state" required></select>
-      </div>
-      <div class="form-group">
-        <label>Select City *</label>
-        <select id="supplier_city" name="city" required></select>
-      </div>
-    </div>
-  
-    <div class="form-row">
-      <div class="form-group">
-        <label>Address 1 *</label>
-        <input type="text" name="address1" placeholder="Enter Address 1" required>
-      </div>
-      <div class="form-group">
-        <label>Address 2</label>
-        <input type="text" name="address2" placeholder="Enter Address 2">
-      </div>
-      <div class="form-group">
-        <label>Pincode</label>
-        <input type="text" name="pincode" placeholder="Enter Pincode">
-      </div>
-    </div>
-  
-    <h2 class="form-section-title">Company KYC</h2>
-    <div class="form-row">
-      <div class="form-group">
-        <label>Business License Number *</label>
-        <input type="text" name="business_license_number" placeholder="Enter Business License Number" required>
-      </div>
-      <div class="form-group">
-        <label>Upload Business License Document *</label>
-        <input type="file" name="business_license_document" required>
-      </div></div>
       <div class="form-row">
-      <div class="form-group">
-        <label>Company Type *</label>
-        <select name="company_type" required>
-          <option value="">Select Company Type</option>
-          <!-- Add options -->
-        </select>
+        <div class="form-group">
+          <label>Country *</label>
+          <select id="supplier_country" name="country" required>
+            <option value="India">India</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>State *</label>
+          <select id="supplier_state" name="state" required>
+            <option value="">Select State</option>
+            <option value="Gujarat">Gujarat</option>
+            <option value="Maharashtra">Maharashtra</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>City *</label>
+          <select id="supplier_city" name="city" required>
+            <option value="">Select City</option>
+          </select>
+        </div>
       </div>
-
-      <div class="form-group">
-        <label>Nature of Business</label>
-        <select name="nature_of_business">
-          <option value="">Select Nature of Business</option>
-          <!-- Add options -->
-        </select>
-      </div></div>
       <div class="form-row">
-      <div class="form-group">
-        <label>Enter IEC (if any)</label>
-        <input type="text" name="iec" placeholder="Enter IEC">
+        <div class="form-group">
+          <label>Address 1 *</label>
+          <input
+            type="text"
+            name="address1"
+            placeholder="Enter Address 1"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label>Address 2</label>
+          <input type="text" name="address2" placeholder="Enter Address 2" />
+        </div>
+        <div class="form-group">
+          <label>Pincode</label>
+          <input type="text" name="pincode" placeholder="Enter Pincode" />
+        </div>
       </div>
-      <div class="form-group">
-        <label>Upload IEC Documents</label>
-        <input type="file" name="iec_documents">
+      <h2 class="form-section-title">Company KYC</h2>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Business License Number *</label>
+          <input
+            type="text"
+            name="business_license_number"
+            placeholder="Enter Business License Number"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label>Upload Business License Document *</label>
+          <input type="file" name="business_license_document" required />
+        </div>
       </div>
-    </div>
-  
-    <h2 class="form-section-title">Bank Information (Optional)</h2>
-    <div class="form-row">
-      <div class="form-group">
-        <label>Bank Name</label>
-        <input type="text" name="bank_name" placeholder="Enter Bank Name">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Company Type *</label>
+          <select name="company_type" required>
+            <option value="">Select Company Type</option>
+            <option value="Private Limited">Private Limited</option>
+            <option value="Public Limited">Public Limited</option>
+            <option value="Partnership">Partnership</option>
+            <option value="Proprietorship">Proprietorship</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Nature of Business</label>
+          <select name="nature_of_business">
+            <option value="">Select Nature of Business</option>
+            <option value="Retailer">Retailer</option>
+            <option value="Wholesaler">Wholesaler</option>
+            <option value="Exporter">Exporter</option>
+            <option value="Importer">Importer</option>
+          </select>
+        </div>
       </div>
-      <div class="form-group">
-        <label>Branch Name</label>
-        <input type="text" name="branch_name" placeholder="Enter Branch Name">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Enter IEC (if any)</label>
+          <input type="text" name="iec" placeholder="Enter IEC" />
+        </div>
+        <div class="form-group">
+          <label>Upload IEC Documents</label>
+          <input type="file" name="iec_documents" />
+        </div>
       </div>
-      <div class="form-group">
-        <label>Bank Account Number</label>
-        <input type="text" name="bank_account_number" placeholder="Enter Account Number">
+      <h2 class="form-section-title">Bank Information (Optional)</h2>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Bank Name</label>
+          <input type="text" name="bank_name" placeholder="Enter Bank Name" />
+        </div>
+        <div class="form-group">
+          <label>Branch Name</label>
+          <input
+            type="text"
+            name="branch_name"
+            placeholder="Enter Branch Name"
+          />
+        </div>
+        <div class="form-group">
+          <label>Bank Account Number</label>
+          <input
+            type="text"
+            name="bank_account_number"
+            placeholder="Enter Account Number"
+          />
+        </div>
       </div>
-    </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label>Account Type</label>
-        <input type="text" name="account_type" placeholder="Enter Account Type">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Account Type</label>
+          <input
+            type="text"
+            name="account_type"
+            placeholder="Enter Account Type"
+          />
+        </div>
+        <div class="form-group">
+          <label>IFSC Code</label>
+          <input type="text" name="ifsc_code" placeholder="Enter IFSC Code" />
+        </div>
+        <div class="form-group">
+          <label>SWIFT Code</label>
+          <input type="text" name="swift_code" placeholder="Enter Swift Code" />
+        </div>
       </div>
-      <div class="form-group">
-        <label>IFSC Code</label>
-        <input type="text" name="ifsc_code" placeholder="Enter IFSC Code">
+      <h2 class="form-section-title">Supervisor/Authorised Person</h2>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Supervisor Name *</label>
+          <input
+            type="text"
+            name="supervisor_name"
+            placeholder="Enter Supervisor Name"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label>Supervisor Email Address *</label>
+          <input
+            type="email"
+            name="supervisor_email"
+            placeholder="Enter Supervisor Email"
+            required
+          />
+        </div>
       </div>
-      <div class="form-group">
-        <label>SWIFT Code</label>
-        <input type="text" name="swift_code" placeholder="Enter Swift Code">
-      </div>
-    </div>
-  
-    <h2 class="form-section-title">Supervisor/Authorised Person</h2>
-    <div class="form-row">
-      <div class="form-group">
-        <label>Supervisor Name *</label>
-        <input type="text" name="supervisor_name" placeholder="Enter Supervisor Name" required>
-      </div>
-      <div class="form-group">
-        <label>Supervisor Email Address *</label>
-        <input type="email" name="supervisor_email" placeholder="Enter Supervisor Email" required>
-      </div></div>
       <div class="form-group">
         <label>Supervisor Mobile Number *</label>
         <div class="mobile-input">
           <select name="supervisor_country_code">
             <option value="+91">🇮🇳 +91</option>
-            <option value="+1">🇺🇸 +1</option>
           </select>
-          <input type="tel" name="supervisor_mobile" placeholder="Enter Mobile Number" required>
+          <input
+            type="tel"
+            name="supervisor_mobile"
+            placeholder="Enter Mobile Number"
+            required
+          />
         </div>
       </div>
-  
-    <div class="checkbox-container">
-      <input type="checkbox" id="agree_supplier" name="agree" required>
-      <label for="agree_supplier">I Agree to the Diams <a href="#">Terms & Conditions</a></label>
-    </div>
-    
-    <button type="submit" class="btn-primary">Create Account</button>
-  </div>
+      <div class="checkbox-container">
+        <input type="checkbox" id="agree_supplier" name="agree" required />
+        <label for="agree_supplier"
+          >I Agree to the Diams <a href="#">Terms & Conditions</a></label
+        >
+      </div>
+      <button type="submit" class="btn-primary">Create Account</button>
+      <p>Already have an account? <a href="/login">Login!</a></p>
     </div>
   </form>
 </section>
 
-
 <script>
   document.addEventListener("DOMContentLoaded", function () {
+    // User type selection
     const userTypeBoxes = document.querySelectorAll(".user-type-box");
-
     userTypeBoxes.forEach((box) => {
       box.addEventListener("click", function () {
         const selectedType = this.getAttribute("data-type");
         document.getElementById("user_type").value = selectedType;
 
         // Update the URL without refreshing
-        const newUrl = `/signup/${selectedType === 'buyer' ? 'guest' : selectedType}`;
+        const newUrl = `/signup/${
+          selectedType === "buyer" ? "guest" : selectedType
+        }`;
         window.history.pushState({}, "", newUrl);
 
         // Update UI: Add 'selected' class and toggle forms
         userTypeBoxes.forEach((b) => b.classList.remove("selected"));
         this.classList.add("selected");
 
-        document.querySelectorAll(".user-fields").forEach((el) => el.style.display = "none");
-        document.querySelector(`.${selectedType}-fields`).style.display = "block";
+        // Toggle form visibility and manage required attributes
+        document.querySelectorAll(".user-fields").forEach((el) => {
+          el.style.display = "none";
+          // Remove 'required' from all inputs and selects, including nested ones
+          el.querySelectorAll("input, select").forEach((input) => {
+            input.removeAttribute("required");
+            input.disabled = true; // Disable hidden fields to prevent form data inclusion
+          });
+        });
+        const activeSection = document.querySelector(`.${selectedType}-fields`);
+        activeSection.style.display = "block";
+
+        // Enable inputs and restore 'required' attributes for the active section
+        activeSection.querySelectorAll("input, select").forEach((input) => {
+          input.disabled = false; // Re-enable inputs in active section
+        });
+
+        if (selectedType === "buyer") {
+          activeSection
+            .querySelectorAll(".form-group input, .form-group select")
+            .forEach((input) => {
+              if (input.name === "pincode" || input.name === "user_type")
+                return; // Skip optional fields
+              input.setAttribute("required", "required");
+            });
+          activeSection
+            .querySelector("#agree_buyer")
+            .setAttribute("required", "required");
+        } else if (selectedType === "jeweller") {
+          activeSection
+            .querySelectorAll(".form-group input, .form-group select")
+            .forEach((input) => {
+              if (
+                [
+                  "address2",
+                  "iec",
+                  "iec_document",
+                  "passport_number",
+                  "passport_front",
+                  "passport_back",
+                  "dob",
+                  "driving_license_number",
+                  "driving_license",
+                ].includes(input.name)
+              )
+                return; // Skip optional fields
+              input.setAttribute("required", "required");
+            });
+          activeSection
+            .querySelector("#agree_jeweller")
+            .setAttribute("required", "required");
+        } else if (selectedType === "supplier") {
+          activeSection
+            .querySelectorAll(".form-group input, .form-group select")
+            .forEach((input) => {
+              if (
+                [
+                  "address2",
+                  "iec",
+                  "iec_documents",
+                  "bank_name",
+                  "branch_name",
+                  "bank_account_number",
+                  "account_type",
+                  "ifsc_code",
+                  "swift_code",
+                ].includes(input.name)
+              )
+                return; // Skip optional fields
+              input.setAttribute("required", "required");
+            });
+          activeSection
+            .querySelector("#agree_supplier")
+            .setAttribute("required", "required");
+        }
+
+        // Debug: Log which fields have 'required' attributes
+        console.log("Required fields after toggle:");
+        document
+          .querySelectorAll("input[required], select[required]")
+          .forEach((input) => {
+            console.log(input.name, "is required");
+          });
       });
     });
-  });
 
-  //password function
-  function togglePassword(inputId, icon) {
-  const input = document.getElementById(inputId);
-  if (!input) return; // safeguard
-  const isPassword = input.type === "password";
-  input.type = isPassword ? "text" : "password";
+    // Password toggle function
+    function togglePassword(inputId, icon) {
+      const input = document.getElementById(inputId);
+      if (!input) return; // Safeguard
+      const isPassword = input.type === "password";
+      input.type = isPassword ? "text" : "password";
+      icon.classList.toggle("fa-eye");
+      icon.classList.toggle("fa-eye-slash");
+    }
 
-  icon.classList.toggle("fa-eye");
-  icon.classList.toggle("fa-eye-slash");
-}
-
-  // Fetch dynamic country-state-city data from a JSON file (you can host this or use a CDN)
-  async function loadLocationData() {
-    try {
-      // Replace this URL with your hosted JSON file or a public API
-      const response = await fetch(
-        "https://raw.githubusercontent.com/dr5hn/countries-states-cities-database/master/countries.json"
-      );
-      const countriesData = await response.json();
-
-      const countrySelect = document.getElementById("country");
-      const stateSelect = document.getElementById("state");
-      const citySelect = document.getElementById("city");
-
-      countriesData.forEach((country) => {
-        const option = document.createElement("option");
-        option.value = country.name;
-        option.textContent = country.name;
-        countrySelect.add(option);
+    // Attach toggle password event listeners
+    document.querySelectorAll(".toggle-password").forEach((icon) => {
+      icon.addEventListener("click", function () {
+        const inputId = this.previousElementSibling.id;
+        togglePassword(inputId, this);
       });
+    });
 
-      countrySelect.addEventListener("change", function () {
-        const selectedCountry = countriesData.find(
-          (c) => c.name === this.value
-        );
-        stateSelect.innerHTML = "<option value=''>Select State</option>";
-        citySelect.innerHTML = "<option value=''>Select City</option>";
-        if (selectedCountry && selectedCountry.states) {
-          selectedCountry.states.forEach((state) => {
-            const option = document.createElement("option");
-            option.value = state.name;
-            option.textContent = state.name;
-            stateSelect.add(option);
-          });
-        }
-      });
+    // City data
+    const citiesByState = {
+      Gujarat: ["Surat", "Ahmedabad", "Vadodara", "Rajkot"],
+      Maharashtra: ["Mumbai", "Pune", "Nagpur", "Nashik"],
+    };
+
+    // Function to populate cities based on selected state
+    function populateCities(stateSelectId, citySelectId) {
+      const stateSelect = document.getElementById(stateSelectId);
+      const citySelect = document.getElementById(citySelectId);
+
+      if (!stateSelect || !citySelect) return;
 
       stateSelect.addEventListener("change", function () {
-        const selectedCountry = countriesData.find(
-          (c) => c.name === countrySelect.value
-        );
-        const selectedState = selectedCountry?.states.find(
-          (s) => s.name === this.value
-        );
-        citySelect.innerHTML = "<option value=''>Select City</option>";
-        if (selectedState && selectedState.cities) {
-          selectedState.cities.forEach((city) => {
+        citySelect.innerHTML = '<option value="">Select City</option>';
+        if (citiesByState[this.value]) {
+          citiesByState[this.value].forEach((city) => {
             const option = document.createElement("option");
-            option.value = city.name;
-            option.textContent = city.name;
-            citySelect.add(option);
+            option.value = city;
+            option.textContent = city;
+            citySelect.appendChild(option);
           });
         }
       });
-    } catch (error) {
-      console.error("Error loading country/state/city data:", error);
-    }
-  }
 
-  loadLocationData();
+      // Trigger change to populate cities if state is already selected
+      if (stateSelect.value) {
+        const event = new Event("change");
+        stateSelect.dispatchEvent(event);
+      }
+    }
+
+    // Initialize city dropdowns for all user types
+    populateCities("state", "city"); // Buyer
+    populateCities("dealer_state", "dealer_city"); // Jeweller
+    populateCities("supplier_state", "supplier_city"); // Supplier
+
+    // Form submission validation
+    const form = document.getElementById("signupForm");
+    form.addEventListener("submit", function (event) {
+      const userType = document.getElementById("user_type").value;
+      let password, confirmPassword;
+
+      if (userType === "buyer") {
+        password = document.getElementById("password_buyer").value;
+        confirmPassword = document.getElementById(
+          "confirm_password_buyer"
+        ).value;
+      } else if (userType === "jeweller") {
+        password = document.getElementById("password_jeweller").value;
+        confirmPassword = document.getElementById(
+          "confirm_password_jeweller"
+        ).value;
+      } else if (userType === "supplier") {
+        password = document.getElementById("password_supplier").value;
+        confirmPassword = document.getElementById(
+          "confirm_password_supplier"
+        ).value;
+      }
+
+      if (password !== confirmPassword) {
+        event.preventDefault();
+        alert("Passwords do not match!");
+        return;
+      }
+
+      const submitButton = form.querySelector(".btn-primary");
+      submitButton.disabled = true;
+      submitButton.textContent = "Submitting...";
+
+      // Debug: Log form data
+      const formData = new FormData(form);
+      console.log("Form submitted with user_type:", userType);
+      console.log("Form data:", Object.fromEntries(formData));
+    });
+
+    // Trigger initial user type selection if user_type is pre-set
+    const initialUserType = document.getElementById("user_type").value;
+    if (initialUserType) {
+      const initialBox = document.querySelector(
+        `.user-type-box[data-type="${initialUserType}"]`
+      );
+      if (initialBox) {
+        initialBox.click(); // Simulate click to set initial state
+      }
+    }
+  });
 </script>
 {% endblock %}
