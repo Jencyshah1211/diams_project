@@ -22,9 +22,6 @@
               alt="Diams Logo"
             />
           </a>
-          <a class="search-box">
-            <input type="text" class="search-input" placeholder="🔍 Search" />
-          </a>
         </div>
 
         <!-- Center: Brand -->
@@ -36,7 +33,11 @@
         <div class="top-right">
           <a href="/wishlist">♡ Wishlist</a>
           <a href="/cart">🛍️ Cart</a>
+          {% if session.user %}
+          <a href="#" onclick="confirmLogout()">👤 Logout</a>
+          {% else %}
           <a href="/login">👤 Login</a>
+          {% endif %}
         </div>
       </div>
 
@@ -52,8 +53,7 @@
           <div class="dropdown-content">
             <a href="/diamonds/filter?type=natural">Natural Diamonds</a>
             <a href="/diamonds/filter?type=lab">Lab-Grown Diamonds</a>
-            <a href="/diamonds/filter/top-deals">Top Deals</a>
-            <a href="/diamonds/filter/create-demand">Create Demand</a>
+            <a href="/diamonds/filter/top-deals">Small Stone Deals</a>
           </div>
         </div>
         <div class="dropdown">
@@ -103,5 +103,12 @@
         <a href="#">YouTube</a>
       </p>
     </footer>
+    <script>
+      function confirmLogout() {
+        if (confirm("Are you sure you want to log out?")) {
+          window.location.href = "/logout";
+        }
+      }
+    </script>
   </body>
 </html>
