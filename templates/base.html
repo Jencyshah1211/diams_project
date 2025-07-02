@@ -10,9 +10,8 @@
   </head>
   <body>
     <!-- Navbar -->
-    <!-- NAVBAR WRAPPER -->
     <nav class="navbar-wrapper">
-      <!-- Top row: logo + login/cart/wishlist -->
+      <!-- Top row: logo + login/cart/wishlist/calculator -->
       <div class="navbar-top">
         <!-- Left: Logo -->
         <div class="top-left">
@@ -23,24 +22,32 @@
             />
           </a>
         </div>
-
         <!-- Center: Brand -->
         <div class="top-center">
           <div class="brand-name">D'IAMS</div>
         </div>
-
         <!-- Right: Search + Links -->
         <div class="top-right">
+          {% if session['user'] %} {% if session['user_type'] == 'jeweller' %}
+          <a href="/calculator">📊 Calculator</a>
+          <a href="/profile">👤 Profile</a>
+          <a href="#" onclick="confirmLogout()">🚪 Logout</a>
+          {% elif session['user_type'] == 'buyer' %}
           <a href="/wishlist">♡ Wishlist</a>
           <a href="/cart">🛍️ Cart</a>
-          {% if session.user %}
-          <a href="#" onclick="confirmLogout()">👤 Logout</a>
-          {% else %}
+          <a href="/profile">👤 Profile</a>
+          <a href="#" onclick="confirmLogout()">🚪 Logout</a>
+          {% elif session['user_type'] == 'supplier' %}
+          <a href="/supplier_hub">📦 Supplier Hub</a>
+          <a href="/profile">👤 Profile</a>
+          <a href="#" onclick="confirmLogout()">🚪 Logout</a>
+          {% endif %} {% else %}
+          <a href="/wishlist">♡ Wishlist</a>
+          <a href="/cart">🛍️ Cart</a>
           <a href="/login">👤 Login</a>
           {% endif %}
         </div>
       </div>
-
       <!-- Bottom row: main nav links -->
       <div class="navbar-bottom">
         <div class="dropdown">
@@ -71,12 +78,18 @@
             <a href="/diamonds/filter=create-demand">Bangles</a>
           </div>
         </div>
-
         <a
           href="/education"
           class="{% if request.path == '/education' %}active{% endif %}"
           >DIAMOND EDUCATION</a
         >
+        {% if session['user_type'] == 'supplier' %}
+        <a
+          href="/supplier_hub"
+          class="{% if request.path == '/supplier_hub' %}active{% endif %}"
+          >SUPPLIER HUB</a
+        >
+        {% endif %}
         <a
           href="/franchise"
           class="{% if request.path == '/franchise' %}active{% endif %}"
@@ -89,7 +102,6 @@
         >
       </div>
     </nav>
-
     <main>{% block content %}{% endblock %}</main>
     <footer>
       <p>
