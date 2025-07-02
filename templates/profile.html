@@ -1,5 +1,4 @@
 {% extends "base.html" %} {% block content %}
-
 <section class="hero">
   <h1>Your Gateway to Diamonds</h1>
 </section>
@@ -8,31 +7,292 @@
   {% if logged_in %}
   <div class="profile-layout">
     <aside class="sidebar">
-      <p><strong>John Doe</strong><br />Premium Member</p>
+      <p>
+        <strong>
+          {% if user.user_type == 'jeweller' %} {{ profile_data.company_name }}
+          ({{ profile_data.first_name }} {{ profile_data.last_name }}) {% elif
+          user.user_type == 'supplier' %} {{ profile_data.company_name }} {%
+          else %} {{ profile_data.first_name }} {{ profile_data.last_name }} {%
+          endif %} </strong
+        ><br />
+        {{ user.user_type | capitalize }} Member
+      </p>
       <ul>
-        <li><a href="#">Profile</a></li>
+        <li><a href="{{ url_for('profile') }}" class="active">Profile</a></li>
         <li><a href="#">Orders</a></li>
         <li><a href="#">Payment Methods</a></li>
-        <li><a href="#">Sign Out</a></li>
+        {% if user.user_type == 'jeweller' %}
+        <li><a href="{{ url_for('calculator') }}">Calculator</a></li>
+        {% elif user.user_type == 'supplier' %}
+        <li><a href="{{ url_for('supplier_hub') }}">Supplier Hub</a></li>
+        {% endif %}
+        <li><a href="#" onclick="confirmLogout()">Sign Out</a></li>
       </ul>
     </aside>
     <div class="profile-form">
-      <form>
+      <form method="POST" action="{{ url_for('profile_update') }}">
         <h3>Personal Info</h3>
-        <input type="text" placeholder="First Name" value="John" />
-        <input type="text" placeholder="Last Name" value="Doe" />
-        <input type="email" placeholder="Email" value="john.doe@example.com" />
-        <input type="tel" placeholder="Phone" value="+1 555-123-4567" />
+        {% if user.user_type == 'jeweller' %}
+        <div class="form-group">
+          <label>Company Name</label>
+          <input
+            type="text"
+            name="company_name"
+            value="{{ profile_data.company_name or '' }}"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label>First Name</label>
+          <input
+            type="text"
+            name="first_name"
+            value="{{ profile_data.first_name or '' }}"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label>Last Name</label>
+          <input
+            type="text"
+            name="last_name"
+            value="{{ profile_data.last_name or '' }}"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label>Company Email</label>
+          <input
+            type="email"
+            name="company_email"
+            value="{{ profile_data.company_email or '' }}"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label>Company Mobile</label>
+          <input
+            type="tel"
+            name="company_mobile"
+            value="{{ profile_data.company_mobile or '' }}"
+            required
+          />
+        </div>
+        {% elif user.user_type == 'supplier' %}
+        <div class="form-group">
+          <label>Company Name</label>
+          <input
+            type="text"
+            name="company_name"
+            value="{{ profile_data.company_name or '' }}"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label>Supervisor Name</label>
+          <input
+            type="text"
+            name="supervisor_name"
+            value="{{ profile_data.supervisor_name or '' }}"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label>Supervisor Email</label>
+          <input
+            type="email"
+            name="supervisor_email"
+            value="{{ profile_data.supervisor_email or '' }}"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label>Supervisor Mobile</label>
+          <input
+            type="tel"
+            name="supervisor_mobile"
+            value="{{ profile_data.supervisor_mobile or '' }}"
+            required
+          />
+        </div>
+        {% else %}
+        <div class="form-group">
+          <label>First Name</label>
+          <input
+            type="text"
+            name="first_name"
+            value="{{ profile_data.first_name or '' }}"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label>Last Name</label>
+          <input
+            type="text"
+            name="last_name"
+            value="{{ profile_data.last_name or '' }}"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input
+            type="email"
+            name="email"
+            value="{{ user.email or '' }}"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label>Mobile Number</label>
+          <input
+            type="tel"
+            name="mobile_number"
+            value="{{ user.mobile_number or '' }}"
+            required
+          />
+        </div>
+        {% endif %}
         <h3>Shipping Address</h3>
-        <input
-          type="text"
-          placeholder="Street Address"
-          value="123 Main Street"
-        />
-        <input type="text" placeholder="City" value="New York" />
-        <input type="text" placeholder="State" value="NY" />
-        <input type="text" placeholder="ZIP" value="10001" />
-        <input type="text" placeholder="Country" value="USA" />
+        {% if user.user_type == 'jeweller' %}
+        <div class="form-group">
+          <label>Street Address</label>
+          <input
+            type="text"
+            name="address1"
+            value="{{ profile_data.address1 or '' }}"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label>City</label>
+          <input
+            type="text"
+            name="city"
+            value="{{ profile_data.dealer_city or '' }}"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label>State</label>
+          <input
+            type="text"
+            name="state"
+            value="{{ profile_data.dealer_state or '' }}"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label>Country</label>
+          <input
+            type="text"
+            name="country"
+            value="{{ profile_data.dealer_country or '' }}"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label>ZIP/Pincode</label>
+          <input
+            type="text"
+            name="pincode"
+            value="{{ profile_data.pincode or '' }}"
+            required
+          />
+        </div>
+        {% elif user.user_type == 'supplier' %}
+        <div class="form-group">
+          <label>Street Address</label>
+          <input
+            type="text"
+            name="address1"
+            value="{{ profile_data.address1 or '' }}"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label>City</label>
+          <input
+            type="text"
+            name="city"
+            value="{{ profile_data.city or '' }}"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label>State</label>
+          <input
+            type="text"
+            name="state"
+            value="{{ profile_data.state or '' }}"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label>Country</label>
+          <input
+            type="text"
+            name="country"
+            value="{{ profile_data.country or '' }}"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label>ZIP/Pincode</label>
+          <input
+            type="text"
+            name="pincode"
+            value="{{ profile_data.pincode or '' }}"
+            required
+          />
+        </div>
+        {% else %}
+        <div class="form-group">
+          <label>Street Address</label>
+          <input
+            type="text"
+            name="address"
+            value="{{ profile_data.address or '' }}"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label>City</label>
+          <input
+            type="text"
+            name="city"
+            value="{{ profile_data.city or '' }}"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label>State</label>
+          <input
+            type="text"
+            name="state"
+            value="{{ profile_data.state or '' }}"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label>Country</label>
+          <input
+            type="text"
+            name="country"
+            value="{{ profile_data.country or '' }}"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label>ZIP/Pincode</label>
+          <input
+            type="text"
+            name="pincode"
+            value="{{ profile_data.pincode or '' }}"
+            required
+          />
+        </div>
+        {% endif %}
         <button type="submit" class="btn">Save Changes</button>
       </form>
     </div>
@@ -41,7 +301,6 @@
   <!-- Login/Signup Section -->
   <div class="auth-content auth-flex-container">
     <!-- Login Form -->
-    <!-- Login Form with Tabs -->
     <div class="login-box">
       <h2>LOGIN</h2>
       <div class="login-tabs">
@@ -80,7 +339,6 @@
       </form>
 
       <!-- Mobile OTP Login Form (initially hidden) -->
-      <!-- Mobile OTP Login Form (initially hidden) -->
       <form
         id="mobileForm"
         method="POST"
@@ -95,7 +353,6 @@
           placeholder="1234567890"
           required
         />
-
         <div id="otpSection" style="display: none">
           <label>OTP *</label>
           <input
@@ -113,7 +370,6 @@
           </div>
           <button type="submit" class="btn-primary">LOGIN TO CONTINUE</button>
         </div>
-
         <button type="button" class="btn-primary" id="sendOtpBtn">
           SEND OTP
         </button>
@@ -185,5 +441,4 @@
     });
   });
 </script>
-
 {% endblock %} {% endblock %}
