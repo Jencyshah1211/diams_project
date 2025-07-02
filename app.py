@@ -1,4 +1,13 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import (
+    Flask,
+    render_template,
+    request,
+    redirect,
+    url_for,
+    session,
+    flash,
+    jsonify,
+)
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
@@ -6,6 +15,7 @@ import os
 from datetime import datetime, date
 import mysql.connector
 import logging
+import pandas as pd
 
 app = Flask(__name__)
 app.secret_key = "supersecretkey"  # Change to a secure key in production
@@ -31,7 +41,7 @@ mysql_config = {
 # File upload configuration
 UPLOAD_FOLDER = "static/uploads"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
-ALLOWED_EXTENSIONS = {"pdf", "png", "jpg", "jpeg"}
+ALLOWED_EXTENSIONS = {"pdf", "png", "jpg", "jpeg", "xlsx", "xls"}
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 
@@ -39,9 +49,31 @@ def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
+def role_required(*roles, allow_guest=False):
+    def decorator(f):
+        from functools import wraps
+
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            user_type = session.get("user_type", "guest")
+            if user_type == "guest" and not allow_guest:
+                flash(f"Please log in to view your {f.__name__}", "error")
+                return redirect(url_for("login"))
+            if user_type != "guest" and user_type not in roles:
+                flash("Access denied: Unauthorized role", "error")
+                return redirect(url_for("home"))
+            return f(*args, **kwargs)
+
+        return decorated_function
+
+    return decorator
+
+
 @app.route("/")
 def home():
-    return render_template("index.html")
+    user_type = session.get("user_type", "guest")
+    name = session.get("name", "")
+    return render_template("index.html", user_type=user_type, name=name)
 
 
 @app.route("/diamonds")
@@ -75,8 +107,19 @@ def load_section_partial(section_name):
 
 
 @app.route("/cart")
+@role_required("buyer", allow_guest=True)
 def cart():
-    return render_template("cart.html")
+    user_type = session.get("user_type", "guest")
+    items = []
+    return render_template("cart.html", user_type=user_type, items=items)
+
+
+@app.route("/wishlist")
+@role_required("buyer", allow_guest=True)
+def wishlist():
+    user_type = session.get("user_type", "guest")
+    items = []
+    return render_template("wishlist.html", user_type=user_type, items=items)
 
 
 @app.route("/franchise")
@@ -95,7 +138,6 @@ def profile():
     if not user_email:
         flash("Please log in to view your profile", "error")
         return render_template("profile.html", logged_in=False)
-
     try:
         conn = mysql.connector.connect(**mysql_config)
         cursor = conn.cursor(dictionary=True)
@@ -106,20 +148,18 @@ def profile():
             conn.close()
             flash("User not found", "error")
             return render_template("profile.html", logged_in=False)
-
         profile_data = None
         if user["user_type"] == "buyer":
             cursor.execute("SELECT * FROM buyers WHERE user_id = %s", (user["id"],))
             profile_data = cursor.fetchone()
         elif user["user_type"] == "jeweller":
-            cursor.execute("SELECT * FROM jewellers WHERE user_id = %s", (user["id"],))
+            cursor.execute("SELECT * FROM dealers WHERE user_id = %s", (user["id"],))
             profile_data = cursor.fetchone()
         else:  # supplier
             cursor.execute("SELECT * FROM suppliers WHERE user_id = %s", (user["id"],))
             profile_data = cursor.fetchone()
         cursor.close()
         conn.close()
-
         return render_template(
             "profile.html", logged_in=True, user=user, profile_data=profile_data
         )
@@ -129,49 +169,176 @@ def profile():
         return render_template("profile.html", logged_in=False)
 
 
+@app.route("/profile/update", methods=["POST"])
+def profile_update():
+    user_email = session.get("user")
+    if not user_email:
+        flash("Please log in to update your profile", "error")
+        return redirect(url_for("login"))
+    try:
+        conn = mysql.connector.connect(**mysql_config)
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM users WHERE email = %s", (user_email,))
+        user = cursor.fetchone()
+        if not user:
+            cursor.close()
+            conn.close()
+            flash("User not found", "error")
+            return redirect(url_for("profile"))
+        form = request.form
+        if user["user_type"] == "buyer":
+            cursor.execute(
+                """
+                UPDATE buyers
+                SET first_name = %s, last_name = %s, address = %s, city = %s, state = %s, country = %s, pincode = %s
+                WHERE user_id = %s
+                """,
+                (
+                    form.get("first_name"),
+                    form.get("last_name"),
+                    form.get("address"),
+                    form.get("city"),
+                    form.get("state"),
+                    form.get("country"),
+                    form.get("pincode"),
+                    user["id"],
+                ),
+            )
+            cursor.execute(
+                "UPDATE users SET email = %s, mobile_number = %s WHERE id = %s",
+                (form.get("email"), form.get("mobile_number"), user["id"]),
+            )
+        elif user["user_type"] == "jeweller":
+            cursor.execute(
+                """
+                UPDATE dealers
+                SET company_name = %s, first_name = %s, last_name = %s, company_email = %s, company_mobile = %s,
+                    address1 = %s, dealer_city = %s, dealer_state = %s, dealer_country = %s, pincode = %s
+                WHERE user_id = %s
+                """,
+                (
+                    form.get("company_name"),
+                    form.get("first_name"),
+                    form.get("last_name"),
+                    form.get("company_email"),
+                    form.get("company_mobile"),
+                    form.get("address1"),
+                    form.get("city"),
+                    form.get("state"),
+                    form.get("country"),
+                    form.get("pincode"),
+                    user["id"],
+                ),
+            )
+        else:  # supplier
+            cursor.execute(
+                """
+                UPDATE suppliers
+                SET company_name = %s, supervisor_name = %s, supervisor_email = %s, supervisor_mobile = %s,
+                    address1 = %s, city = %s, state = %s, country = %s, pincode = %s
+                WHERE user_id = %s
+                """,
+                (
+                    form.get("company_name"),
+                    form.get("supervisor_name"),
+                    form.get("supervisor_email"),
+                    form.get("supervisor_mobile"),
+                    form.get("address1"),
+                    form.get("city"),
+                    form.get("state"),
+                    form.get("country"),
+                    form.get("pincode"),
+                    user["id"],
+                ),
+            )
+        conn.commit()
+        cursor.close()
+        conn.close()
+        flash("Profile updated successfully!", "success")
+        return redirect(url_for("profile"))
+    except Exception as e:
+        logging.error(f"Error updating profile: {e}")
+        flash("An error occurred while updating profile", "error")
+        return redirect(url_for("profile"))
+
+
+@app.route("/calculator")
+@role_required("jeweller")
+def calculator():
+    return render_template("calculator.html")
+
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
         email = request.form.get("email")
         password = request.form.get("password")
+        logging.debug(f"Login attempt: email={email}, password={'*' * len(password)}")
+        if not email or not password:
+            logging.error("Missing email or password in login form")
+            flash("Please provide both email and password", "error")
+            return render_template("profile.html", logged_in=False)
         try:
             conn = mysql.connector.connect(**mysql_config)
             cursor = conn.cursor(dictionary=True)
             cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
             user = cursor.fetchone()
-            if user:
-                # Fetch name for session
-                name = None
-                if user["user_type"] == "buyer":
-                    cursor.execute(
-                        "SELECT first_name FROM buyers WHERE user_id = %s",
-                        (user["id"],),
-                    )
-                    name = cursor.fetchone()["first_name"]
-                elif user["user_type"] == "jeweller":
-                    cursor.execute(
-                        "SELECT first_name FROM jewellers WHERE user_id = %s",
-                        (user["id"],),
-                    )
-                    name = cursor.fetchone()["first_name"]
-                else:  # supplier
-                    cursor.execute(
-                        "SELECT company_name FROM suppliers WHERE user_id = %s",
-                        (user["id"],),
-                    )
-                    name = cursor.fetchone()["company_name"]
-            cursor.close()
-            conn.close()
-            if user and check_password_hash(user["password_hash"], password):
+            if not user:
+                logging.error(f"No user found for email: {email}")
+                flash("Invalid email or password", "error")
+                cursor.close()
+                conn.close()
+                return render_template("profile.html", logged_in=False)
+            name = None
+            if user["user_type"] == "buyer":
+                cursor.execute(
+                    "SELECT first_name FROM buyers WHERE user_id = %s", (user["id"],)
+                )
+                result = cursor.fetchone()
+                name = result["first_name"] if result else None
+            elif user["user_type"] == "jeweller":
+                cursor.execute(
+                    "SELECT first_name FROM dealers WHERE user_id = %s", (user["id"],)
+                )
+                result = cursor.fetchone()
+                name = result["first_name"] if result else None
+            else:  # supplier
+                cursor.execute(
+                    "SELECT company_name FROM suppliers WHERE user_id = %s",
+                    (user["id"],),
+                )
+                result = cursor.fetchone()
+                name = result["company_name"] if result else None
+            if not name:
+                logging.error(
+                    f"No name found for user_id: {user['id']}, user_type: {user['user_type']}"
+                )
+                flash("Error retrieving user information", "error")
+                cursor.close()
+                conn.close()
+                return render_template("profile.html", logged_in=False)
+            if check_password_hash(user["password_hash"], password):
                 session["user"] = email
                 session["name"] = name
-                flash("Logged in successfully!", "somewhere")
+                session["user_type"] = user["user_type"]
+                session["user_id"] = user["id"]
+                logging.info(f"User logged in successfully: {email}")
+                flash("Logged in successfully!", "success")
+                cursor.close()
+                conn.close()
                 return redirect(url_for("home"))
             else:
+                logging.error(f"Invalid password for email: {email}")
                 flash("Invalid email or password", "error")
+                cursor.close()
+                conn.close()
+                return render_template("profile.html", logged_in=False)
         except Exception as e:
             logging.error(f"Error during login: {e}")
             flash("An error occurred during login", "error")
+            cursor.close()
+            conn.close()
+            return render_template("profile.html", logged_in=False)
     return render_template("profile.html", logged_in=False)
 
 
@@ -186,7 +353,6 @@ def signup(user_type):
     if not selected_user_type:
         flash("Invalid user type", "error")
         return redirect(url_for("home"))
-
     if request.method == "POST":
         form = request.form
         logging.debug(f"Form data received: {dict(form)}")
@@ -198,8 +364,6 @@ def signup(user_type):
         password = form.get("password")
         confirm_password = form.get("confirm_password")
         agree = form.get("agree")
-
-        # Server-side validation
         required_fields = {
             "buyer": [
                 "email",
@@ -257,10 +421,7 @@ def signup(user_type):
             ],
         }
         for field in required_fields[selected_user_type]:
-            if field not in [
-                "license_document",
-                "business_license_document",
-            ]:  # File fields checked separately
+            if field not in ["license_document", "business_license_document"]:
                 if not form.get(field):
                     logging.error(f"Missing required field: {field}")
                     flash(
@@ -268,19 +429,14 @@ def signup(user_type):
                         "error",
                     )
                     return render_template("signup.html", user_type=selected_user_type)
-
-        # Validate terms agreement
         if not agree:
             logging.error("Terms and conditions not agreed")
             flash("You must agree to the Terms & Conditions", "error")
             return render_template("signup.html", user_type=selected_user_type)
-
-        # Validate passwords
         if password != confirm_password:
             logging.error("Passwords do not match")
             flash("Passwords do not match", "error")
             return render_template("signup.html", user_type=selected_user_type)
-
         conn = None
         cursor = None
         try:
@@ -290,16 +446,14 @@ def signup(user_type):
             if cursor.fetchone():
                 logging.info(f"User already exists: {email}")
                 flash("User already exists, please login", "error")
+                cursor.close()
+                conn.close()
                 return redirect(url_for("login"))
-
-            # Determine name for greeting
             name = (
                 form.get("first_name")
                 if selected_user_type in ["buyer", "jeweller"]
                 else form.get("company_name")
             )
-
-            # Insert into users table
             cursor.execute(
                 """
                 INSERT INTO users (email, password_hash, user_type, mobile_number, country_code, is_active, updated_at)
@@ -324,7 +478,6 @@ def signup(user_type):
                 ),
             )
             user_id = cursor.lastrowid
-
             if selected_user_type == "buyer":
                 cursor.execute(
                     """
@@ -363,7 +516,6 @@ def signup(user_type):
                     app.config["UPLOAD_FOLDER"], filename
                 )
                 license_document.save(license_document_path)
-
                 iec_document = request.files.get("iec_document")
                 iec_document_path = None
                 if (
@@ -376,7 +528,6 @@ def signup(user_type):
                         app.config["UPLOAD_FOLDER"], filename
                     )
                     iec_document.save(iec_document_path)
-
                 passport_front = request.files.get("passport_front")
                 passport_front_path = None
                 if (
@@ -389,7 +540,6 @@ def signup(user_type):
                         app.config["UPLOAD_FOLDER"], filename
                     )
                     passport_front.save(passport_front_path)
-
                 passport_back = request.files.get("passport_back")
                 passport_back_path = None
                 if (
@@ -402,7 +552,6 @@ def signup(user_type):
                         app.config["UPLOAD_FOLDER"], filename
                     )
                     passport_back.save(passport_back_path)
-
                 driving_license = request.files.get("driving_license")
                 driving_license_path = None
                 if (
@@ -415,7 +564,6 @@ def signup(user_type):
                         app.config["UPLOAD_FOLDER"], filename
                     )
                     driving_license.save(driving_license_path)
-
                 dob = None
                 if form.get("dob"):
                     try:
@@ -426,10 +574,9 @@ def signup(user_type):
                         return render_template(
                             "signup.html", user_type=selected_user_type
                         )
-
                 cursor.execute(
                     """
-                    INSERT INTO jewellers (
+                    INSERT INTO dealers (
                         user_id, company_name, company_email, company_mobile, company_country_code,
                         address1, address2, country, state, city, pincode, company_type,
                         nature_of_business, license_number, license_document, iec, iec_document,
@@ -487,7 +634,6 @@ def signup(user_type):
                     app.config["UPLOAD_FOLDER"], filename
                 )
                 business_license_document.save(business_license_document_path)
-
                 iec_documents = request.files.get("iec_documents")
                 iec_documents_path = None
                 if (
@@ -500,7 +646,6 @@ def signup(user_type):
                         app.config["UPLOAD_FOLDER"], filename
                     )
                     iec_documents.save(iec_documents_path)
-
                 cursor.execute(
                     """
                     INSERT INTO suppliers (
@@ -540,11 +685,12 @@ def signup(user_type):
                         datetime.now(),
                     ),
                 )
-
             conn.commit()
             logging.info(f"User signed up successfully: {email}")
             session["user"] = email
             session["name"] = name
+            session["user_type"] = selected_user_type
+            session["user_id"] = user_id
             flash("Signup successful!", "success")
             return redirect(url_for("home"))
         except Exception as e:
@@ -556,7 +702,6 @@ def signup(user_type):
                 cursor.close()
             if conn:
                 conn.close()
-
     return render_template("signup.html", user_type=selected_user_type)
 
 
@@ -564,8 +709,52 @@ def signup(user_type):
 def logout():
     session.pop("user", None)
     session.pop("name", None)
+    session.pop("user_type", None)
+    session.pop("user_id", None)
     flash("Logged out successfully.", "info")
     return redirect(url_for("login"))
+
+
+@app.route("/supplier_hub")
+@role_required("supplier")
+def supplier_hub():
+    return render_template("supplier_hub.html")
+
+
+@app.route("/api/supplier/inventory/upload", methods=["POST"])
+@role_required("supplier")
+def upload_inventory():
+    try:
+        if "inventory_file" not in request.files:
+            flash("No file uploaded", "error")
+            return redirect(url_for("supplier_hub"))
+        file = request.files["inventory_file"]
+        if not file or not allowed_file(file.filename):
+            flash(
+                "Invalid file format. Please upload an Excel file (.xlsx, .xls)",
+                "error",
+            )
+            return redirect(url_for("supplier_hub"))
+        filename = secure_filename(file.filename)
+        file_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+        file.save(file_path)
+        df = pd.read_excel(file_path)
+        logging.info(f"Uploaded Excel file contents: {df.to_dict(orient='records')}")
+        flash(
+            "Inventory file uploaded successfully! Awaiting diamonds table for processing.",
+            "success",
+        )
+        return redirect(url_for("supplier_hub"))
+    except Exception as e:
+        logging.error(f"Error uploading inventory: {e}")
+        flash(f"Error uploading inventory: {str(e)}", "error")
+        return redirect(url_for("supplier_hub"))
+
+
+@app.route("/api/supplier/inventory")
+@role_required("supplier")
+def get_supplier_inventory():
+    return jsonify([])
 
 
 if __name__ == "__main__":
