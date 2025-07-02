@@ -1,0 +1,46 @@
+{% extends "base.html" %} {% block content %} {% if session['user_type'] ==
+'supplier' %}
+<section class="supplier-hub">
+  <h1 style="text-align: center">Supplier Hub</h1>
+  <h2 style="text-align: center">Hi, {{ session['name'] }}!</h2>
+  <div class="upload-section">
+    <h3>Upload Diamond Inventory (Excel)</h3>
+    <form
+      action="/api/supplier/inventory/upload"
+      method="POST"
+      enctype="multipart/form-data"
+    >
+      <input type="file" name="inventory_file" accept=".xlsx,.xls" required />
+      <button type="submit" class="btn">Upload Inventory</button>
+    </form>
+    {% with messages = get_flashed_messages(with_categories=true) %} {% if
+    messages %} {% for category, message in messages %}
+    <p class="{{ category }}">{{ message }}</p>
+    {% endfor %} {% endif %} {% endwith %}
+  </div>
+  <div class="inventory-list">
+    <h3>Your Inventory</h3>
+    <div id="inventory-list">
+      <p>Awaiting diamonds table to display inventory.</p>
+    </div>
+  </div>
+</section>
+<script>
+  // Fetch inventory (placeholder)
+  async function loadInventory() {
+    const response = await fetch("/api/supplier/inventory");
+    const inventory = await response.json();
+    document.getElementById("inventory-list").innerHTML = inventory.length
+      ? inventory
+          .map(
+            (item) =>
+              `<div><p>${item.name} - ${item.shape} - ${item.carat}ct - $${item.price_retail}</p></div>`
+          )
+          .join("")
+      : "<p>No inventory available yet.</p>";
+  }
+  document.addEventListener("DOMContentLoaded", loadInventory);
+</script>
+{% else %}
+<p style="text-align: center; color: red">Access Denied: Supplier Only</p>
+{% endif %} {% endblock %}

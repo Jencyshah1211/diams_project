@@ -1,0 +1,39 @@
+{% extends "base.html" %} {% block content %}
+<section class="page">
+  <h2>Your Wishlist</h2>
+  {% with messages = get_flashed_messages(with_categories=true) %} {% if
+  messages %} {% for category, message in messages %}
+  <p class="{{ category }}">{{ message }}</p>
+  {% endfor %} {% endif %} {% endwith %}
+  <div class="cart-layout">
+    <div class="cart-items">
+      {% if items %} {% for item in items %}
+      <div class="cart-item">
+        <img
+          src="{{ item.image_url|default('https://images.unsplash.com/photo-1600267185393-e158a98703de?auto=format&fit=crop&q=80') }}"
+          alt="{{ item.name|default('Item') }}"
+        />
+        <div class="item-details">
+          <p>
+            <strong>{{ item.name|default('Item Name') }}</strong><br />
+            {{ item.description|default('No description available') }}
+          </p>
+        </div>
+        <p class="price">${{ item.price|default('0.00') }}</p>
+      </div>
+      {% endfor %} {% else %}
+      <p class="empty-message">No items in your wishlist.</p>
+      {% if user_type == 'guest' %}
+      <p>Sign in to add items to your wishlist!</p>
+      <a href="{{ url_for('login') }}" class="btn">Login</a>
+      <a href="{{ url_for('signup', user_type='guest') }}" class="btn"
+        >Sign Up</a
+      >
+      {% else %}
+      <p>Browse our collection to add items to your wishlist.</p>
+      <a href="{{ url_for('diamonds') }}" class="btn">Browse Diamonds</a>
+      {% endif %} {% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}

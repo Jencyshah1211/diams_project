@@ -1,0 +1,220 @@
+{% extends "base.html" %} {% block content %}
+<section class="calculator">
+  <h1 style="text-align: center">Diamond Price Calculator</h1>
+  <p style="text-align: center">
+    Instantly calculate diamond prices based on shape, carat, color, and
+    clarity.
+  </p>
+
+  <!-- Filter Section for Inventory Overview -->
+  <div class="filter-section">
+    <h2>Filter Inventory</h2>
+    <div class="filter-grid">
+      <div class="filter-group">
+        <label for="shape">Shape</label>
+        <select id="shape" name="shape">
+          <option value="round">Round</option>
+          <option value="princess">Princess</option>
+          <option value="emerald">Emerald</option>
+          <option value="oval">Oval</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="carat">Carat</label>
+        <input
+          type="number"
+          id="carat"
+          name="carat"
+          step="0.01"
+          min="0.1"
+          value="1.0"
+          required
+        />
+      </div>
+      <div class="filter-group">
+        <label for="color">Color</label>
+        <select id="color" name="color">
+          <option value="D">D</option>
+          <option value="E">E</option>
+          <option value="F">F</option>
+          <option value="G">G</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="clarity">Clarity</label>
+        <select id="clarity" name="clarity">
+          <option value="IF">IF</option>
+          <option value="VVS1">VVS1</option>
+          <option value="VVS2">VVS2</option>
+          <option value="VS1">VS1</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="currency">Currency</label>
+        <select id="currency" name="currency">
+          <option value="USD">USD</option>
+          <option value="INR">INR</option>
+          <option value="EUR">EUR</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="country">Tax Country</label>
+        <select id="country" name="country">
+          <option value="India">India (3% GST)</option>
+          <option value="USA">USA (8% Sales Tax)</option>
+          <option value="EU">EU (20% VAT)</option>
+        </select>
+      </div>
+    </div>
+    <div class="button-group">
+      <button class="btn" onclick="calculatePrice()">Calculate Price</button>
+      <button class="btn btn-clear" onclick="resetFilters()">Clear All</button>
+    </div>
+  </div>
+
+  <!-- Price Display -->
+  <div class="price-result">
+    <h2>Calculated Price</h2>
+    <p id="price-output">Enter values to calculate price</p>
+    <p id="tax-output"></p>
+  </div>
+
+  <!-- Inventory Overview -->
+  <div class="inventory-section">
+    <h2>Inventory Overview</h2>
+    <div id="inventory-table">
+      <table>
+        <thead>
+          <tr>
+            <th>Stock No</th>
+            <th>Shape</th>
+            <th>Carat</th>
+            <th>Color</th>
+            <th>Clarity</th>
+            <th>Price</th>
+            <th>Certificate</th>
+          </tr>
+        </thead>
+        <tbody id="inventory-body">
+          <!-- Populated by JavaScript -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<script>
+  // Mock inventory data (replace with API call when diamonds table is implemented)
+  const inventory = [
+    {
+      stock_no: "D001",
+      shape: "round",
+      carat: 1.0,
+      color: "D",
+      clarity: "IF",
+      price: 5000,
+      certificate: "GIA12345",
+    },
+    {
+      stock_no: "D002",
+      shape: "princess",
+      carat: 1.5,
+      color: "E",
+      clarity: "VVS1",
+      price: 6000,
+      certificate: "GIA67890",
+    },
+    {
+      stock_no: "D003",
+      shape: "emerald",
+      carat: 0.8,
+      color: "F",
+      clarity: "VS1",
+      price: 3000,
+      certificate: "GIA54321",
+    },
+  ];
+
+  // Pricing multipliers
+  const shapeMultipliers = {
+    round: 1.0,
+    princess: 0.9,
+    emerald: 0.85,
+    oval: 0.95,
+  };
+  const colorMultipliers = { D: 1.2, E: 1.1, F: 1.0, G: 0.9 };
+  const clarityMultipliers = { IF: 1.3, VVS1: 1.2, VVS2: 1.1, VS1: 1.0 };
+  const currencyRates = { USD: 1.0, INR: 83.0, EUR: 0.93 };
+  const taxRates = { India: 0.03, USA: 0.08, EU: 0.2 };
+
+  function calculatePrice() {
+    const shape = document.getElementById("shape").value;
+    const carat = parseFloat(document.getElementById("carat").value);
+    const color = document.getElementById("color").value;
+    const clarity = document.getElementById("clarity").value;
+    const currency = document.getElementById("currency").value;
+    const country = document.getElementById("country").value;
+
+    // Basic price calculation
+    const basePricePerCarat = 1000; // Mock base price
+    let price =
+      basePricePerCarat *
+      carat *
+      shapeMultipliers[shape] *
+      colorMultipliers[color] *
+      clarityMultipliers[clarity];
+    const tax = price * taxRates[country];
+    const totalPrice = price + tax;
+    const convertedPrice = totalPrice * currencyRates[currency];
+
+    document.getElementById(
+      "price-output"
+    ).innerText = `Price: ${convertedPrice.toFixed(2)} ${currency}`;
+    document.getElementById(
+      "tax-output"
+    ).innerText = `Tax (${country}): ${tax.toFixed(2)} ${currency}`;
+
+    // Update inventory table
+    const filteredInventory = inventory.filter(
+      (item) =>
+        item.shape === shape &&
+        item.color === color &&
+        item.clarity === clarity &&
+        item.carat >= carat - 0.1 &&
+        item.carat <= carat + 0.1
+    );
+    const tbody = document.getElementById("inventory-body");
+    tbody.innerHTML = "";
+    filteredInventory.forEach((item) => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${item.stock_no}</td>
+        <td>${item.shape.charAt(0).toUpperCase() + item.shape.slice(1)}</td>
+        <td>${item.carat}</td>
+        <td>${item.color}</td>
+        <td>${item.clarity}</td>
+        <td>${(item.price * currencyRates[currency]).toFixed(
+          2
+        )} ${currency}</td>
+        <td><a href="https://example.com/cert/${
+          item.certificate
+        }" target="_blank">${item.certificate}</a></td>
+      `;
+      tbody.appendChild(row);
+    });
+  }
+
+  function resetFilters() {
+    document.getElementById("shape").value = "round";
+    document.getElementById("carat").value = "1.0";
+    document.getElementById("color").value = "D";
+    document.getElementById("clarity").value = "IF";
+    document.getElementById("currency").value = "USD";
+    document.getElementById("country").value = "India";
+    document.getElementById("price-output").innerText =
+      "Enter values to calculate price";
+    document.getElementById("tax-output").innerText = "";
+    document.getElementById("inventory-body").innerHTML = "";
+  }
+</script>
+{% endblock %}
