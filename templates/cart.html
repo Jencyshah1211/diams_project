@@ -1,61 +1,83 @@
-{% extends "base.html" %} {% block content %}
+{% extends "base.html" %}
+{% block content %}
 <section class="page">
   <h2>Shopping Cart</h2>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <p class="{{ category }}">{{ message }}</p>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
   <div class="cart-layout">
     <div class="cart-items">
-      <div class="cart-item">
-        <img
-          src="https://images.unsplash.com/photo-1600267185393-e158a98703de?auto=format&fit=crop&q=80"
-          alt="Diamond"
-        />
-        <div class="item-details">
-          <p>
-            <strong>Round Brilliant Diamond</strong><br />1.01 ct, D Color, VS1
-            Clarity
-          </p>
-          <div class="item-controls">
-            <span class="delete">🗑️</span>
-            <label
-              >Quantity
-              <select>
-                <option>1</option>
-              </select>
-            </label>
+      {% if items %}
+        {% for item in items %}
+          <div class="cart-item">
+            <img src="{{ item.image_url|default('https://images.unsplash.com/photo-1600267185393-e158a98703de?auto=format&fit=crop&q=80') }}" alt="{{ item.name|default('Item') }}" />
+            <div class="item-details">
+              <p>
+                <strong>{{ item.name|default('Item Name') }}</strong><br />
+                {{ item.description|default('No description available') }}
+              </p>
+              {% if user_type == 'buyer' %}
+                <div class="item-controls">
+                  <span class="delete" data-id="{{ item.id|default(0) }}">🗑️</span>
+                  <label>
+                    Quantity
+                    <select data-id="{{ item.id|default(0) }}">
+                      {% for i in range(1, 6) %}
+                        <option value="{{ i }}" {% if i == item.quantity|default(1) %}selected{% endif %}>{{ i }}</option>
+                      {% endfor %}
+                    </select>
+                  </label>
+                </div>
+              {% endif %}
+            </div>
+            <p class="price">${{ item.price|default('0.00') }}</p>
           </div>
-        </div>
-        <p class="price">$12,500</p>
-      </div>
-
-      <div class="cart-item">
-        <img
-          src="https://images.unsplash.com/photo-1590548784585-643d2b9f2925?auto=format&fit=crop&q=80"
-          alt="Ring"
-        />
-        <div class="item-details">
-          <p><strong>Classic Solitaire Ring</strong><br />18K White Gold</p>
-          <div class="item-controls">
-            <span class="delete">🗑️</span>
-            <label
-              >Quantity
-              <select>
-                <option>1</option>
-              </select>
-            </label>
-          </div>
-        </div>
-        <p class="price">$2,999</p>
-      </div>
+        {% endfor %}
+      {% else %}
+        <p class="empty-message">No items in your cart.</p>
+        {% if user_type == 'guest' %}
+          <p>Sign in to add items to your cart!</p>
+          <a href="{{ url_for('login') }}" class="btn">Login</a>
+          <a href="{{ url_for('signup', user_type='guest') }}" class="btn">Sign Up</a>
+        {% else %}
+          <p>Browse our collection to add items to your cart.</p>
+          <a href="{{ url_for('diamonds') }}" class="btn">Browse Diamonds</a>
+        {% endif %}
+      {% endif %}
     </div>
-
-    <div class="cart-summary">
-      <h4>Order Summary</h4>
-      <p>Subtotal <span>$15,499</span></p>
-      <p>Tax (8%) <span>$1,239.92</span></p>
-      <p>Shipping <span>$50</span></p>
-      <hr />
-      <p class="total">Total <span>$16,788.92</span></p>
-      <a href="#" class="btn">🧾 Proceed to Checkout</a>
-    </div>
+    {% if items %}
+      <div class="cart-summary">
+        <h4>Order Summary</h4>
+        <p>Subtotal <span>${{ (items|sum(attribute='price')|default(0.0))|round(2) }}</span></p>
+        <p>Tax (8%) <span>${{ ((items|sum(attribute='price')|default(0.0)) * 0.08)|round(2) }}</span></p>
+        <p>Shipping <span>$50.00</span></p>
+        <hr />
+        <p class="total">Total <span>${{ ((items|sum(attribute='price')|default(0.0)) * 1.08 + 50)|round(2) }}</span></p>
+        {% if user_type == 'buyer' %}
+          <a href="#" class="btn">🧾 Proceed to Checkout</a>
+        {% else %}
+          <p>Sign in to proceed to checkout.</p>
+          <a href="{{ url_for('login') }}" class="btn">Login</a>
+        {% endif %}
+      </div>
+    {% endif %}
   </div>
 </section>
+<script>
+  // Placeholder for delete and quantity update (to be implemented with API)
+  document.querySelectorAll('.delete').forEach(button => {
+    button.addEventListener('click', () => {
+      alert('Delete functionality not implemented yet.');
+    });
+  });
+  document.querySelectorAll('select').forEach(select => {
+    select.addEventListener('change', () => {
+      alert('Quantity update not implemented yet.');
+    });
+  });
+</script>
 {% endblock %}
