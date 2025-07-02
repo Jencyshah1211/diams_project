@@ -2,12 +2,25 @@
 <section class="hero">
   <h1>Discover Exceptional Diamonds</h1>
   <p>Explore our curated collection of natural and lab-grown diamonds.</p>
+  {% if session['user'] %} {% if session['user_type'] == 'buyer' %}
   <a class="btn" href="/diamonds">Browse Collection</a>
+  <a class="btn" href="/cart">View Cart</a>
+  <a class="btn" href="/wishlist">View Wishlist</a>
+  {% elif session['user_type'] == 'jeweller' %}
+  <a class="btn" href="/diamonds/filter?type=wholesale"
+    >Browse Wholesale Diamonds</a
+  >
+  {% elif session['user_type'] == 'supplier' %}
+  <a class="btn" href="/supplier_hub">Manage Inventory</a>
+  {% endif %} {% else %}
+  <a class="btn" href="/diamonds">Browse Collection</a>
+  <a class="btn" href="/login">Login to Explore More</a>
+  {% endif %}
 </section>
 
 <section class="features">
-  {% if session['user'] and session['name'] %}
-  <h2 style="text-align: center">Hi, {{ session['name'] }}!</h2>
+  {% if session['user'] %}
+  <h2 class="greeting">Hi, {{ session['name'] }}!</h2>
   {% endif %}
   <h2 style="text-align: center">Why Choose Diams?</h2>
   <div class="grid">
@@ -60,5 +73,4 @@
     </div>
   </div>
 </section>
-
 {% endblock %}
