@@ -101,7 +101,7 @@
             placeholder="Password"
             required
           />
-          <i class="fas fa-eye toggle-password"></i>
+          <i class="fas fa-eye-slash toggle-password"></i>
         </div>
         <div class="form-group password-wrapper">
           <label>Confirm Password *</label>
@@ -112,7 +112,7 @@
             placeholder="Confirm Password"
             required
           />
-          <i class="fas fa-eye toggle-password"></i>
+          <i class="fas fa-eye-slash toggle-password"></i>
         </div>
       </div>
       <div class="form-row">
@@ -338,24 +338,24 @@
         <div class="form-group password-wrapper">
           <label>Login Password *</label>
           <input
-            id="password_buyer"
+            id="password_jeweller"
             type="password"
             name="password"
             placeholder="Password"
             required
           />
-          <i class="fas fa-eye toggle-password"></i>
+          <i class="fas fa-eye-slash toggle-password"></i>
         </div>
         <div class="form-group password-wrapper">
           <label>Confirm Password *</label>
           <input
-            id="confirm_password_buyer"
+            id="confirm_password_jeweller"
             type="password"
             name="confirm_password"
             placeholder="Confirm Password"
             required
           />
-          <i class="fas fa-eye toggle-password"></i>
+          <i class="fas fa-eye-slash toggle-password"></i>
         </div>
       </div>
       <h2 class="form-section-title">Passport & Driving License</h2>
@@ -456,24 +456,24 @@
         <div class="form-group password-wrapper">
           <label>Login Password *</label>
           <input
-            id="password_buyer"
+            id="password_supplier"
             type="password"
             name="password"
             placeholder="Password"
             required
           />
-          <i class="fas fa-eye toggle-password"></i>
+          <i class="fas fa-eye-slash toggle-password"></i>
         </div>
         <div class="form-group password-wrapper">
           <label>Confirm Password *</label>
           <input
-            id="confirm_password_buyer"
+            id="confirm_password_supplier"
             type="password"
             name="confirm_password"
             placeholder="Confirm Password"
             required
           />
-          <i class="fas fa-eye toggle-password"></i>
+          <i class="fas fa-eye-slash toggle-password"></i>
         </div>
         <div class="form-group">
           <label>Inventory Type *</label>
@@ -773,8 +773,8 @@
       if (!input) return; // Safeguard
       const isPassword = input.type === "password";
       input.type = isPassword ? "text" : "password";
-      icon.classList.toggle("fa-eye");
       icon.classList.toggle("fa-eye-slash");
+      icon.classList.toggle("fa-eye");
     }
 
     // Attach toggle password event listeners
@@ -822,6 +822,7 @@
     populateCities("dealer_state", "dealer_city"); // Jeweller
     populateCities("supplier_state", "supplier_city"); // Supplier
 
+    // Form submission validation
     // Form submission validation
     const form = document.getElementById("signupForm");
     form.addEventListener("submit", function (event) {
