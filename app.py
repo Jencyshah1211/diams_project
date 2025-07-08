@@ -31,13 +31,18 @@ MYSQL_USER = os.getenv("DB_USER")
 MYSQL_PASSWORD = os.getenv("DB_PASSWORD")
 MYSQL_HOST = os.getenv("DB_HOST")
 MYSQL_DB = os.getenv("DB_NAME")
+
+if not all([MYSQL_USER, MYSQL_PASSWORD, MYSQL_HOST, MYSQL_DB]):
+    print("One or more database environment variables are missing")
+    raise ValueError("Database configuration is incomplete")
+
 mysql_config = {
     "user": MYSQL_USER,
     "password": MYSQL_PASSWORD,
     "host": MYSQL_HOST,
     "database": MYSQL_DB,
 }
-
+# print("mysql", mysql_config)
 # File upload configuration
 UPLOAD_FOLDER = "static/uploads"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
