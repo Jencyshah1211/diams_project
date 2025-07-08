@@ -1,0 +1,90 @@
+-- Creating the users table
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    user_type ENUM('buyer', 'jeweller', 'supplier') NOT NULL,
+    mobile_number VARCHAR(20),
+    country_code VARCHAR(10),
+    is_active BOOLEAN DEFAULT TRUE,
+    updated_at DATETIME,
+    created_at DATETIME
+);
+
+-- Creating the buyers table
+CREATE TABLE buyers (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    address VARCHAR(255),
+    country VARCHAR(100),
+    state VARCHAR(100),
+    city VARCHAR(100),
+    pincode VARCHAR(20),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Creating the dealers table
+CREATE TABLE dealers (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    company_name VARCHAR(255) NOT NULL,
+    company_email VARCHAR(255),
+    company_mobile VARCHAR(20),
+    company_country_code VARCHAR(10),
+    address1 VARCHAR(255),
+    address2 VARCHAR(255),
+    country VARCHAR(100),
+    state VARCHAR(100),
+    city VARCHAR(100),
+    pincode VARCHAR(20),
+    company_type VARCHAR(100),
+    nature_of_business VARCHAR(255),
+    license_number VARCHAR(100),
+    license_document VARCHAR(255),
+    iec VARCHAR(100),
+    iec_document VARCHAR(255),
+    first_name VARCHAR(100),
+    last_name VARCHAR(100),
+    passport_number VARCHAR(50),
+    passport_front VARCHAR(255),
+    passport_back VARCHAR(255),
+    dob DATE,
+    driving_license_number VARCHAR(100),
+    driving_license VARCHAR(255),
+    updated_at DATETIME,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Creating the suppliers table
+CREATE TABLE suppliers (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    company_name VARCHAR(255) NOT NULL,
+    inventory_type VARCHAR(100),
+    address1 VARCHAR(255),
+    address2 VARCHAR(255),
+    country VARCHAR(100),
+    state VARCHAR(100),
+    city VARCHAR(100),
+    pincode VARCHAR(20),
+    company_type VARCHAR(100),
+    nature_of_business VARCHAR(255),
+    business_license_number VARCHAR(100),
+    business_license_document VARCHAR(255),
+    iec VARCHAR(100),
+    iec_documents VARCHAR(255),
+    bank_name VARCHAR(100),
+    branch_name VARCHAR(100),
+    bank_account_number VARCHAR(100),
+    account_type VARCHAR(50),
+    ifsc_code VARCHAR(50),
+    swift_code VARCHAR(50),
+    supervisor_name VARCHAR(100),
+    supervisor_email VARCHAR(255),
+    supervisor_mobile VARCHAR(20),
+    supervisor_country_code VARCHAR(10),
+    updated_at DATETIME,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
