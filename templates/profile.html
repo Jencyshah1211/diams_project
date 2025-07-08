@@ -19,11 +19,26 @@
       </p>
       <ul>
         <li><a href="{{ url_for('profile') }}" class="active">Profile</a></li>
+        {% if user.user_type == 'buyer' %}
+        <li><a href="#">Search History</a></li>
+        <li><a href="{{ url_for('wishlist') }}">Wishlist</a></li>
+        <li><a href="#">Track Order</a></li>
         <li><a href="#">Orders</a></li>
-        <li><a href="#">Payment Methods</a></li>
-        {% if user.user_type == 'jeweller' %}
-        <li><a href="{{ url_for('calculator') }}">Calculator</a></li>
+        <li><a href="#">Payments</a></li>
+        {% elif user.user_type == 'jeweller' %}
+        <li><a href="#">My Buying</a></li>
+        <li><a href="#">Track Order</a></li>
+        <li><a href="#">Order History</a></li>
+        <li><a href="#">Payments</a></li>
+        <li><a href="#">My API</a></li>
+        <li><a href="#">My Logs</a></li>
+
         {% elif user.user_type == 'supplier' %}
+        <li><a href="#">New Inventory</a></li>
+        <li><a href="#">Edit Inventory</a></li>
+        <li><a href="#">My API</a></li>
+        <li><a href="#">My Logs</a></li>
+        <li><a href="#">Sample file</a></li>
         <li><a href="{{ url_for('supplier_hub') }}">Supplier Hub</a></li>
         {% endif %}
         <li><a href="#" onclick="confirmLogout()">Sign Out</a></li>
