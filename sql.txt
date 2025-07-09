@@ -88,3 +88,47 @@ CREATE TABLE suppliers (
     updated_at DATETIME,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+-- create diamonds table
+CREATE TABLE diamonds (
+    diamond_id BIGINT PRIMARY KEY AUTO_INCREMENT, -- Auto-incremented primary key
+    diams_id VARCHAR(50) UNIQUE NOT NULL, -- DIAM'S ID (platform-generated, e.g., UUID)
+    supplier_id INT NOT NULL, -- Links to suppliers.id
+    stock_number VARCHAR(50) NOT NULL,-- STONE ID (e.g., N0130411), unique per supplier
+    diamond_type ENUM('NATURAL', 'LAB GROWN') NOT NULL, -- NAT/LAB (limited to NATURAL, LAB GROWN)
+    stone_location VARCHAR(50), -- STONE LOCATION (e.g., Mumbai)
+    shape VARCHAR(50) NOT NULL, -- SHAPE (e.g., CUSHION)
+    carat DECIMAL(5,2) NOT NULL, -- SIZE (e.g., 0.33)
+    color VARCHAR(10) NOT NULL, -- COLOR (e.g., E)
+    clarity VARCHAR(10) NOT NULL, -- CLARITY (e.g., IF)
+    cut VARCHAR(50) NOT NULL, -- CUT (e.g., VG)
+    polish VARCHAR(20) NOT NULL, -- POL (e.g., VG)
+    symmetry VARCHAR(20) NOT NULL, -- SYMM (e.g., VG)
+    fluorescence VARCHAR(50) NOT NULL, -- FLUOR (e.g., NONE)
+    length DECIMAL(5,2) NOT NULL, -- LENGTH (e.g., 4.06)
+    width DECIMAL(5,2) NOT NULL, -- WIDTH (e.g., 3.88)
+    lw_ratio DECIMAL(5,2), -- L/W RATIO (e.g., 1.05)
+    rap_price DECIMAL(10,2), -- RAP (e.g., 2200)
+    discount DECIMAL(5,2), -- DISC (e.g., 52.1)
+    price_per_carat DECIMAL(10,2), -- PRICE($/ct) (e.g., 1053.8)
+    amount DECIMAL(10,2) NOT NULL, -- AMT($) (e.g., 347.75)
+    exchange_rate DECIMAL(5,2), -- $ RATE (e.g., 86)
+    inr_value DECIMAL(10,2), -- INR VALUE (e.g., 29906.5)
+    markup_factor DECIMAL(5,2), -- DIAM'S MARK UP (e.g., 1.5)
+    wholesale_price DECIMAL(10,2), -- DIAM'S PRICE (e.g., 44860)
+    is_certified BOOLEAN NOT NULL, -- CERTIFIED (e.g., YES → TRUE)
+    certificate_issuer VARCHAR(50), -- LAB (e.g., GIA)
+    certificate_number VARCHAR(50), -- REPORT NO. (e.g., 2426691798)
+    has_opens BOOLEAN NOT NULL, -- OPENS (e.g., NO → FALSE)
+    black_inclusion VARCHAR(10) NOT NULL, -- BLACK INCLUSION (e.g., BT1)
+    is_natural BOOLEAN NOT NULL, -- NATURAL (e.g., NO → FALSE)
+    image_url VARCHAR(255) NOT NULL, -- IMAGE (e.g., .JPG)
+    video_url VARCHAR(255) NOT NULL, -- VIDEO (e.g., .MP4)
+    remarks TEXT, -- REMAKRS (e.g., empty)
+    stock_status ENUM('in_stock', 'out_of_stock', 'pre_order') NOT NULL DEFAULT 'in_stock', -- Stock status
+    
+    created_at DATETIME, -- Set to current date-time (e.g., 2025-07-09 10:20:00 IST)
+    updated_at DATETIME ,
+    FOREIGN KEY (supplier_id) REFERENCES suppliers(id) ON DELETE CASCADE,
+    CONSTRAINT unique_stock_number_per_supplier UNIQUE (stock_number, supplier_id) -- Ensure uniqueness per supplier
+);
