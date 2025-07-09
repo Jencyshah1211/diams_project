@@ -16,6 +16,7 @@ from datetime import datetime, date
 import mysql.connector
 import logging
 import pandas as pd
+import uuid
 
 app = Flask(__name__)
 app.secret_key = "supersecretkey"  # Change to a secure key in production
@@ -740,26 +741,167 @@ def upload_inventory():
                 "error",
             )
             return redirect(url_for("supplier_hub"))
+
         filename = secure_filename(file.filename)
         file_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
         file.save(file_path)
+
+        # Read Excel file
         df = pd.read_excel(file_path)
         logging.info(f"Uploaded Excel file contents: {df.to_dict(orient='records')}")
-        flash(
-            "Inventory file uploaded successfully! Awaiting diamonds table for processing.",
-            "success",
-        )
+
+        # Connect to database
+        conn = mysql.connector.connect(**mysql_config)
+        cursor = conn.cursor()
+
+        # Get supplier_id from suppliers table based on user_id
+        user_id = session.get("user_id")
+        cursor.execute("SELECT id FROM suppliers WHERE user_id = %s", (user_id,))
+        supplier = cursor.fetchone()
+        if not supplier:
+            flash(
+                "No supplier record found for the logged-in user. Please complete supplier registration.",
+                "error",
+            )
+            return redirect(url_for("supplier_hub"))
+        supplier_id = supplier[0]
+
+        # Process each row
+        for index, row in df.iterrows():
+            data = {
+                "diams_id": str(uuid.uuid4()),  # Generate unique diams_id
+                "supplier_id": supplier_id,  # Use the retrieved supplier_id
+                "stock_number": str(row.get("STONE ID", "")),  # Ensure string
+                "diamond_type": (
+                    "NATURAL"
+                    if row.get("NAT/LAB", "").upper() == "NAT"
+                    else "LAB GROWN"
+                ),
+                "stone_location": str(row.get("STONE LOCATION", "")),
+                "shape": str(row.get("SHAPE", "")),
+                "carat": (
+                    float(row.get("SIZE", 0.0)) if pd.notna(row.get("SIZE")) else 0.0
+                ),
+                "color": str(row.get("COLOR", "")),
+                "clarity": str(row.get("CLARITY", "")),
+                "cut": str(row.get("CUT", "")),
+                "polish": str(row.get("POL", "")),
+                "symmetry": str(row.get("SYMM", "")),
+                "fluorescence": str(row.get("FLUOR", "")),
+                "length": (
+                    float(row.get("LENGTH", 0.0))
+                    if pd.notna(row.get("LENGTH"))
+                    else 0.0
+                ),
+                "width": (
+                    float(row.get("WIDTH", 0.0)) if pd.notna(row.get("WIDTH")) else 0.0
+                ),
+                "lw_ratio": (
+                    float(row.get("L/W RATIO", 0.0))
+                    if pd.notna(row.get("L/W RATIO"))
+                    else None
+                ),
+                "rap_price": (
+                    float(row.get("RAP", 0.0)) if pd.notna(row.get("RAP")) else None
+                ),
+                "discount": (
+                    float(row.get("DISC", 0.0)) if pd.notna(row.get("DISC")) else None
+                ),
+                "price_per_carat": (
+                    float(row.get("PRICE($/ct)", 0.0))
+                    if pd.notna(row.get("PRICE($/ct)"))
+                    else None
+                ),
+                "amount": (
+                    float(row.get("AMT($)", 0.0))
+                    if pd.notna(row.get("AMT($)"))
+                    else 0.0
+                ),
+                "exchange_rate": (
+                    float(row.get("$ RATE", 0.0))
+                    if pd.notna(row.get("$ RATE"))
+                    else None
+                ),
+                "inr_value": (
+                    float(row.get("INR VALUE", 0.0))
+                    if pd.notna(row.get("INR VALUE"))
+                    else None
+                ),
+                "markup_factor": (
+                    float(row.get("DIAM'S MARK UP", 0.0))
+                    if pd.notna(row.get("DIAM'S MARK UP"))
+                    else None
+                ),
+                "wholesale_price": (
+                    float(row.get("DIAM'S PRICE", 0.0))
+                    if pd.notna(row.get("DIAM'S PRICE"))
+                    else None
+                ),
+                "is_certified": str(row.get("CERTIFIED", "")).strip().upper() == "YES",
+                "certificate_issuer": str(row.get("LAB", "")),
+                "certificate_number": str(row.get("REPORT NO.", "")),
+                "has_opens": str(row.get("OPENS", "")).strip().upper() == "YES",
+                "black_inclusion": str(row.get("BLACK INCLUSION", "")),
+                "is_natural": str(row.get("NATURAL", "")).strip().upper() == "YES",
+                "image_url": str(row.get("IMAGE", "")),
+                "video_url": str(row.get("VIDEO", "")),
+                "remarks": str(row.get("REMAKRS", "")),
+                "stock_status": "in_stock",  # Default, adjust if Excel has this column
+                "created_at": datetime.now(),
+                "updated_at": datetime.now(),
+            }
+
+            # Insert into diamonds table
+            cursor.execute(
+                """
+                INSERT INTO diamonds (
+                    diams_id, supplier_id, stock_number, diamond_type, stone_location, shape, carat, color,
+                    clarity, cut, polish, symmetry, fluorescence, length, width, lw_ratio, rap_price,
+                    discount, price_per_carat, amount, exchange_rate, inr_value, markup_factor,
+                    wholesale_price, is_certified, certificate_issuer, certificate_number, has_opens,
+                    black_inclusion, is_natural, image_url, video_url, remarks, stock_status,
+                    created_at, updated_at
+                ) VALUES (%(diams_id)s, %(supplier_id)s, %(stock_number)s, %(diamond_type)s, %(stone_location)s,
+                    %(shape)s, %(carat)s, %(color)s, %(clarity)s, %(cut)s, %(polish)s, %(symmetry)s,
+                    %(fluorescence)s, %(length)s, %(width)s, %(lw_ratio)s, %(rap_price)s, %(discount)s,
+                    %(price_per_carat)s, %(amount)s, %(exchange_rate)s, %(inr_value)s, %(markup_factor)s,
+                    %(wholesale_price)s, %(is_certified)s, %(certificate_issuer)s, %(certificate_number)s,
+                    %(has_opens)s, %(black_inclusion)s, %(is_natural)s, %(image_url)s, %(video_url)s,
+                    %(remarks)s, %(stock_status)s, %(created_at)s, %(updated_at)s)
+            """,
+                data,
+            )
+
+        conn.commit()
+        flash("Inventory uploaded successfully!", "success")
         return redirect(url_for("supplier_hub"))
     except Exception as e:
         logging.error(f"Error uploading inventory: {e}")
         flash(f"Error uploading inventory: {str(e)}", "error")
         return redirect(url_for("supplier_hub"))
+    finally:
+        if "conn" in locals():
+            conn.close()
+        if "cursor" in locals():
+            cursor.close()
 
 
 @app.route("/api/supplier/inventory")
 @role_required("supplier")
 def get_supplier_inventory():
-    return jsonify([])
+    try:
+        conn = mysql.connector.connect(**mysql_config)
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute(
+            "SELECT * FROM diamonds WHERE supplier_id = %s", (session.get("user_id"),)
+        )
+        inventory = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return jsonify(inventory)
+    except Exception as e:
+        logging.error(f"Error fetching inventory: {e}")
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == "__main__":
