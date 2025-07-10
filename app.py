@@ -18,6 +18,7 @@ import logging
 import pandas as pd
 import uuid
 
+
 app = Flask(__name__)
 app.secret_key = "supersecretkey"  # Change to a secure key in production
 load_dotenv()
@@ -892,10 +893,40 @@ def get_supplier_inventory():
     try:
         conn = mysql.connector.connect(**mysql_config)
         cursor = conn.cursor(dictionary=True)
+
+        # Step 1: Get user_id from session
+        user_id = session.get("user_id")
+        if not user_id:
+            cursor.close()
+            conn.close()
+            return jsonify({"error": "No user ID found in session"}), 401
+
+        # Step 2: Fetch supplier_id from suppliers table using user_id
+        cursor.execute("SELECT id FROM suppliers WHERE user_id = %s", (user_id,))
+        supplier = cursor.fetchone()
+
+        if not supplier:
+            cursor.close()
+            conn.close()
+            return (
+                jsonify({"error": "No supplier record found for the logged-in user"}),
+                404,
+            )
+
+        supplier_id = supplier["id"]
+        # print("jency supplier id", supplier_id)
+        # Step 3: Fetch inventory for the supplier_id with specified columns
         cursor.execute(
-            "SELECT * FROM diamonds WHERE supplier_id = %s", (session.get("user_id"),)
+            """
+            SELECT stock_number, diamond_type, shape, carat, color, clarity, cut, 
+                   polish, symmetry, fluorescence, image_url
+            FROM diamonds 
+            WHERE supplier_id = %s
+            """,
+            (supplier_id,),
         )
         inventory = cursor.fetchall()
+        # print("jency inventory", inventory)
         cursor.close()
         conn.close()
         return jsonify(inventory)
