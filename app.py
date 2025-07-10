@@ -85,13 +85,87 @@ def home():
 
 @app.route("/diamonds")
 def diamonds():
-    return render_template("diamonds.html")
+    conn = mysql.connector.connect(**mysql_config)
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(
+        "SELECT * FROM diamonds WHERE stock_status = 'in_stock' ORDER BY amount ASC"
+    )
+    diamonds = cursor.fetchall()
+    conn.close()
+    return render_template("diamonds.html", diamonds=diamonds)
 
 
-@app.route("/diamonds/filter=")
+@app.route("/diamonds/filter")
 def filter_diamonds():
-    flash("Diamond filtering not implemented yet.", "info")
-    return render_template("diamonds.html")
+    conn = mysql.connector.connect(**mysql_config)
+    cursor = conn.cursor(dictionary=True)
+
+    query = "SELECT * FROM diamonds WHERE stock_status = 'in_stock'"
+    params = {}
+
+    # Handle filter parameters
+    diamond_type = request.args.get("diamond_type")
+    shape = request.args.get("shape")
+    carat_min = request.args.get("carat_min")
+    carat_max = request.args.get("carat_max")
+    color_type = request.args.get("color_type")
+    color_grade = request.args.get("color_grade")
+    clarity = request.args.get("clarity")
+    certificate = request.args.get("certificate")
+    fluorescence = request.args.get("fluorescence")
+    make = request.args.get("make")
+    stock_no = request.args.get("stock_no")
+
+    conditions = []
+    if diamond_type:
+        conditions.append("diamond_type = %(diamond_type)s")
+        params["diamond_type"] = diamond_type
+    if shape:
+        conditions.append("shape = %(shape)s")
+        params["shape"] = shape
+    if carat_min and carat_max:
+        conditions.append("carat BETWEEN %(carat_min)s AND %(carat_max)s")
+        params["carat_min"] = float(carat_min)
+        params["carat_max"] = float(carat_max)
+    if color_type:
+        conditions.append("color LIKE %(color_type)s%%")
+        params["color_type"] = color_type
+    if color_grade:
+        conditions.append("color = %(color_grade)s")
+        params["color_grade"] = color_grade
+    if clarity:
+        conditions.append("clarity = %(clarity)s")
+        params["clarity"] = clarity
+    if certificate:
+        conditions.append("is_certified = %(certificate)s")
+        params["certificate"] = certificate.lower() == "certified"
+    if fluorescence:
+        conditions.append("fluorescence = %(fluorescence)s")
+        params["fluorescence"] = fluorescence
+    if make:
+        conditions.append("cut = %(make)s")
+        params["make"] = make
+    if stock_no:
+        conditions.append("stock_number = %(stock_no)s")
+        params["stock_no"] = stock_no
+
+    if conditions:
+        query += " AND " + " AND ".join(conditions)
+
+    # Handle sorting
+    sort_by = request.args.get("sort_by", "amount_asc")
+    if sort_by == "price_asc":
+        query += " ORDER BY amount ASC"
+    elif sort_by == "price_desc":
+        query += " ORDER BY amount DESC"
+    else:
+        query += " ORDER BY amount ASC"
+
+    cursor.execute(query, params)
+    diamonds = cursor.fetchall()
+    conn.close()
+
+    return jsonify(diamonds)
 
 
 @app.route("/jewelry")
