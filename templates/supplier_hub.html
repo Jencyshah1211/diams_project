@@ -1,8 +1,8 @@
 {% extends "base.html" %} {% block content %} {% if session['user_type'] ==
 'supplier' %}
 <section class="supplier-hub">
-  <h1 style="text-align: center">Supplier Hub</h1>
-  <h2 style="text-align: center">Hi, {{ session['name'] }}!</h2>
+  <h1>Supplier Hub</h1>
+  <h2>Hi, {{ session['name'] }}!</h2>
   <div class="upload-section">
     <h3>Upload Diamond Inventory (Excel)</h3>
     <form
@@ -13,33 +13,149 @@
       <input type="file" name="inventory_file" accept=".xlsx,.xls" required />
       <button type="submit" class="btn">Upload Inventory</button>
     </form>
+    <div id="upload-loading" class="loading" style="display: none">
+      <span class="spinner"></span>
+    </div>
     {% with messages = get_flashed_messages(with_categories=true) %} {% if
     messages %} {% for category, message in messages %}
     <p class="{{ category }}">{{ message }}</p>
     {% endfor %} {% endif %} {% endwith %}
   </div>
-  <div class="inventory-list">
-    <h3>Your Inventory</h3>
-    <div id="inventory-list">
-      <p>Awaiting diamonds table to display inventory.</p>
-    </div>
-  </div>
 </section>
+<div class="inventory-list">
+  <h3>Your Inventory</h3>
+  <table id="inventory-table">
+    <thead>
+      <tr>
+        <th>Stock Number</th>
+        <th>Diamond Type</th>
+        <th>Shape</th>
+        <th>Carat</th>
+        <th>Color</th>
+        <th>Clarity</th>
+        <th>Cut</th>
+        <th>Polish</th>
+        <th>Symmetry</th>
+        <th>Fluorescence</th>
+        <th>Image</th>
+      </tr>
+    </thead>
+    <tbody id="inventory-table-body">
+      <tr>
+        <td colspan="11">Loading inventory...</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
 <script>
-  // Fetch inventory (placeholder)
   async function loadInventory() {
-    const response = await fetch("/api/supplier/inventory");
-    const inventory = await response.json();
-    document.getElementById("inventory-list").innerHTML = inventory.length
-      ? inventory
-          .map(
-            (item) =>
-              `<div><p>${item.name} - ${item.shape} - ${item.carat}ct - $${item.price_retail}</p></div>`
-          )
-          .join("")
-      : "<p>No inventory available yet.</p>";
+    try {
+      console.log("Fetching inventory from /api/supplier/inventory");
+      const response = await fetch("/api/supplier/inventory");
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      const inventory = await response.json();
+      console.log("Inventory data received:", inventory);
+
+      const tableBody = document.getElementById("inventory-table-body");
+
+      if (inventory.error) {
+        console.error("API returned error:", inventory.error);
+        tableBody.innerHTML = `<tr><td colspan="11">Error: ${inventory.error}</td></tr>`;
+        return;
+      }
+
+      if (!inventory || inventory.length === 0) {
+        console.log("No inventory data found");
+        tableBody.innerHTML = `<tr><td colspan="11">No inventory available yet.</td></tr>`;
+        return;
+      }
+
+      tableBody.innerHTML = inventory
+        .map((item) => {
+          const carat =
+            item.carat != null ? Number(item.carat).toFixed(2) : "0.00";
+          const imageUrl =
+            item.image_url &&
+            item.image_url !== "nan" &&
+            item.image_url !== "click here" &&
+            item.image_url.startsWith(("http://", "https://", "."))
+              ? item.image_url
+              : "";
+          const cut = item.cut === "nan" ? "" : item.cut || "-";
+          const polish = item.polish === "nan" ? "" : item.polish || "-";
+          const symmetry = item.symmetry === "nan" ? "" : item.symmetry || "-";
+          const fluorescence =
+            item.fluorescence === "nan" ? "" : item.fluorescence || "-";
+
+          return `
+          <tr>
+            <td>${item.stock_number || "-"}</td>
+            <td>${item.diamond_type || "-"}</td>
+            <td>${item.shape || "-"}</td>
+            <td>${carat}</td>
+            <td>${item.color || "-"}</td>
+            <td>${item.clarity || "-"}</td>
+            <td>${cut}</td>
+            <td>${polish}</td>
+            <td>${symmetry}</td>
+            <td>${fluorescence}</td>
+            <td>${
+              imageUrl
+                ? `<a href="${imageUrl}" target="_blank">View Image</a>`
+                : "-"
+            }</td>
+          </tr>
+        `;
+        })
+        .join("");
+    } catch (error) {
+      console.error("Error loading inventory:", error);
+      document.getElementById(
+        "inventory-table-body"
+      ).innerHTML = `<tr><td colspan="11">Error loading inventory: ${error.message}. Please try again later.</td></tr>`;
+    }
   }
-  document.addEventListener("DOMContentLoaded", loadInventory);
+
+  document.addEventListener("DOMContentLoaded", () => {
+    console.log("Page loaded, calling loadInventory");
+    loadInventory();
+  });
+
+  document.querySelector("form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+    const loadingDiv = document.getElementById("upload-loading");
+    const submitButton = form.querySelector(".btn");
+
+    // Show loading indicator and disable button
+    loadingDiv.style.display = "flex";
+    submitButton.disabled = true;
+
+    try {
+      console.log("Submitting inventory upload form");
+      const response = await fetch(form.action, {
+        method: form.method,
+        body: formData,
+      });
+
+      if (response.ok) {
+        console.log("Upload successful, reloading inventory");
+        await loadInventory();
+      } else {
+        console.error("Upload failed:", response.status, response.statusText);
+      }
+    } catch (error) {
+      console.error("Error uploading file:", error);
+    } finally {
+      // Hide loading indicator and re-enable button
+      loadingDiv.style.display = "none";
+      submitButton.disabled = false;
+    }
+  });
 </script>
 {% else %}
 <p style="text-align: center; color: red">Access Denied: Supplier Only</p>
