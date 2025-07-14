@@ -8,7 +8,7 @@
     <div class="sort-group">
       <label for="sortBy">Sort By:</label>
       <select id="sortBy" name="sort_by">
-        <option value="amount_asc">Price: Low to High</option>
+        <option value="amount_asc" selected>Price: Low to High</option>
         <option value="price_desc">Price: High to Low</option>
       </select>
     </div>
@@ -43,7 +43,7 @@
               Marquise Asscher Heart".split() %}
               <button
                 type="button"
-                onclick="setValue('shapeInput', '{{ shape|lower }}')"
+                onclick="setValue('shapeInputNatural', '{{ shape|lower }}', event)"
                 class="shape-btn"
                 data-shape="{{ shape|lower }}"
               >
@@ -55,7 +55,7 @@
               </button>
               {% endfor %}
             </div>
-            <input type="hidden" name="shape" id="shapeInput" />
+            <input type="hidden" name="shape" id="shapeInputNatural" />
           </div>
 
           <!-- Carat Filter -->
@@ -103,31 +103,32 @@
             <div class="button-group">
               <button
                 type="button"
-                onclick="setValue('colorType', 'white')"
+                onclick="setValue('colorType', 'white',event)"
                 class="color-type-btn"
               >
                 White
               </button>
               <button
                 type="button"
-                onclick="setValue('colorType', 'fancy')"
+                onclick="setValue('colorType', 'fancy',event)"
                 class="color-type-btn"
               >
                 Fancy
               </button>
             </div>
-            <div class="color-buttons button-group">
+            <div class="button-group color-buttons">
               {% for c in "D E F G H I J K L M N O-P Q-R S-T U-V W-X
               Y-Z".split() %}
               <button
                 type="button"
-                onclick="setValue('colorGrade', '{{ c }}')"
+                onclick="setValue('colorGrade', '{{ c }}', event)"
                 class="color-grade-btn"
               >
                 {{ c }}
               </button>
               {% endfor %}
             </div>
+
             <input type="hidden" name="color_type" id="colorType" />
             <input type="hidden" name="color_grade" id="colorGrade" />
           </div>
@@ -139,7 +140,7 @@
               {% for clarity in "FL IF VVS1 VVS2 VS1 VS2 SI1 SI2".split() %}
               <button
                 type="button"
-                onclick="setValue('clarityInput', '{{ clarity }}')"
+                onclick="setValue('clarityInput', '{{ clarity }}',event)"
                 class="clarity-btn"
               >
                 {{ clarity }}
@@ -157,7 +158,7 @@
                 {% for cert in "Certified Non-Certified".split() %}
                 <button
                   type="button"
-                  onclick="setValue('certificateInput', '{{ cert }}')"
+                  onclick="setValue('certificateInput', '{{ cert }}',event)"
                   class="certificate-btn"
                 >
                   {{ cert }}
@@ -172,7 +173,7 @@
                 {% for fluo in "None Faint Medium Strong V-Strong".split() %}
                 <button
                   type="button"
-                  onclick="setValue('fluorescenceInput', '{{ fluo }}')"
+                  onclick="setValue('fluorescenceInput', '{{ fluo }}',event)"
                   class="fluorescence-btn"
                 >
                   {{ fluo }}
@@ -191,7 +192,7 @@
                 {% for make in "3EX EX-CUT 3VG+".split() %}
                 <button
                   type="button"
-                  onclick="setValue('makeInput', '{{ make }}')"
+                  onclick="setValue('makeInput', '{{ make }}',event)"
                   class="make-btn"
                 >
                   {{ make }}
@@ -211,7 +212,7 @@
             <button type="submit" class="search-btn">Search Diamonds</button>
             <button
               type="button"
-              onclick="resetForm('formLab')"
+              onclick="resetForm('formNatural')"
               class="clear-btn"
             >
               Clear All
@@ -238,7 +239,7 @@
               Marquise Asscher Heart".split() %}
               <button
                 type="button"
-                onclick="setValue('shapeInputLab', '{{ shape|lower }}')"
+                onclick="setValue('shapeInputLab', '{{ shape|lower }}', event)"
                 class="shape-btn"
                 data-shape="{{ shape|lower }}"
               >
@@ -298,7 +299,7 @@
             <div class="button-group">
               <button
                 type="button"
-                onclick="setValue('colorTypeLab', 'white')"
+                onclick="setValue('colorTypeLab', 'white',event)"
                 class="color-type-btn"
               >
                 White
@@ -308,7 +309,7 @@
               {% for c in "D E F G H I J K L M".split() %}
               <button
                 type="button"
-                onclick="setValue('colorGradeLab', '{{ c }}')"
+                onclick="setValue('colorGradeLab', '{{ c }}',event)"
                 class="color-grade-btn"
               >
                 {{ c }}
@@ -326,7 +327,7 @@
               {% for clarity in "VVS1 VVS2 VS1 VS2 SI1 SI2".split() %}
               <button
                 type="button"
-                onclick="setValue('clarityLab', '{{ clarity }}')"
+                onclick="setValue('clarityLab', '{{ clarity }}',event)"
                 class="clarity-btn"
               >
                 {{ clarity }}
@@ -344,7 +345,7 @@
                 {% for cert in "Certified Non-Certified".split() %}
                 <button
                   type="button"
-                  onclick="setValue('certificateLab', '{{ cert }}')"
+                  onclick="setValue('certificateLab', '{{ cert }}',event)"
                   class="certificate-btn"
                 >
                   {{ cert }}
@@ -359,7 +360,7 @@
                 {% for fluo in "None Faint Medium Strong".split() %}
                 <button
                   type="button"
-                  onclick="setValue('fluorescenceLab', '{{ fluo }}')"
+                  onclick="setValue('fluorescenceLab', '{{ fluo }}',event)"
                   class="fluorescence-btn"
                 >
                   {{ fluo }}
@@ -378,7 +379,7 @@
                 {% for make in "3EX EX-CUT".split() %}
                 <button
                   type="button"
-                  onclick="setValue('makeLab', '{{ make }}')"
+                  onclick="setValue('makeLab', '{{ make }}',event)"
                   class="make-btn"
                 >
                   {{ make }}
@@ -453,21 +454,50 @@
   // Set value for hidden inputs and toggle active class on buttons
   function setValue(inputId, value, event = null) {
     const input = document.getElementById(inputId);
-    if (!input) return;
+    if (!input) {
+      console.error(`Input with ID ${inputId} not found`);
+      return;
+    }
 
     input.value = value;
+    console.log(`Set ${inputId} to ${value}`);
 
     if (event) {
       const button = event.currentTarget;
-      const filterRow = button.closest(".filter-row");
+      const group =
+        button.closest(".button-group") || button.closest(".shape-buttons");
 
-      if (filterRow) {
+      if (group) {
         // Remove active class from all buttons in the same group
-        const buttons = filterRow.querySelectorAll("button");
+        const buttons = group.querySelectorAll("button");
         buttons.forEach((btn) => btn.classList.remove("active"));
 
         // Add active class to clicked button
         button.classList.add("active");
+        console.log(`Activated button for ${inputId} with value ${value}`);
+      }
+      if (inputId.includes("colorType")) {
+        const gradeInput = document.getElementById(
+          inputId.replace("Type", "Grade")
+        );
+        const gradeButtons = document.querySelectorAll(
+          `.${inputId.includes("Lab") ? "color-grade-btn" : "color-grade-btn"}`
+        );
+        gradeInput.value = "";
+        gradeButtons.forEach((btn) => btn.classList.remove("active"));
+        console.log(`Cleared ${gradeInput.id} because ${inputId} was selected`);
+      }
+
+      if (inputId.includes("colorGrade")) {
+        const typeInput = document.getElementById(
+          inputId.replace("Grade", "Type")
+        );
+        const typeButtons = document.querySelectorAll(
+          `.${inputId.includes("Lab") ? "color-type-btn" : "color-type-btn"}`
+        );
+        typeInput.value = "";
+        typeButtons.forEach((btn) => btn.classList.remove("active"));
+        console.log(`Cleared ${typeInput.id} because ${inputId} was selected`);
       }
     }
   }
@@ -488,6 +518,7 @@
     hiddenInputs.forEach((input) => {
       if (input.name !== "diamond_type") input.value = "";
     });
+    console.log(`Reset form ${formId}`);
   }
 
   // Toggle filter form visibility
@@ -508,13 +539,62 @@
     }
   }
 
-  // Initialize
+  // Sort diamonds based on selected option
+  function sortDiamonds() {
+    const sortBy = document.getElementById("sortBy").value;
+    const diamondGrid = document.querySelector(".diamond-grid");
+    const diamondCards = Array.from(diamondGrid.querySelectorAll(".card"));
+
+    diamondCards.sort((a, b) => {
+      const priceA = parseFloat(
+        a.querySelector("strong").textContent.replace("₹", "")
+      );
+      const priceB = parseFloat(
+        b.querySelector("strong").textContent.replace("₹", "")
+      );
+      return sortBy === "amount_asc" ? priceA - priceB : priceB - priceA;
+    });
+
+    diamondCards.forEach((card) => diamondGrid.appendChild(card));
+  }
+
+  function setupCaratSlider(minSliderId, maxSliderId, minInputId, maxInputId) {
+    const minSlider = document.getElementById(minSliderId);
+    const maxSlider = document.getElementById(maxSliderId);
+    const minInput = document.getElementById(minInputId);
+    const maxInput = document.getElementById(maxInputId);
+
+    if (!minSlider || !maxSlider || !minInput || !maxInput) return;
+
+    // Sync sliders to inputs
+    minSlider.addEventListener("input", () => {
+      minInput.value = minSlider.value;
+    });
+
+    maxSlider.addEventListener("input", () => {
+      maxInput.value = maxSlider.value;
+    });
+
+    // Optionally, sync inputs to sliders too
+    minInput.addEventListener("input", () => {
+      minSlider.value = minInput.value;
+    });
+
+    maxInput.addEventListener("input", () => {
+      maxSlider.value = maxInput.value;
+    });
+  }
+  // Initialize and sync button states with hidden inputs
   document.addEventListener("DOMContentLoaded", function () {
     const filterBtn = document.getElementById("filterBtn");
+    const sortBy = document.getElementById("sortBy");
 
     if (filterBtn) {
-      // Add click event listener to filter button
       filterBtn.addEventListener("click", toggleFilterForm);
+    }
+
+    if (sortBy) {
+      sortBy.addEventListener("change", sortDiamonds);
     }
 
     // Handle form submissions
@@ -523,6 +603,39 @@
         e.preventDefault();
         console.log("Form submitted:", new FormData(form));
         // Add your form submission logic here
+      });
+      setupCaratSlider(
+        "caratSliderMinNatural",
+        "caratSliderMaxNatural",
+        "caratMinNatural",
+        "caratMaxNatural"
+      );
+      setupCaratSlider(
+        "caratSliderMinLab",
+        "caratSliderMaxLab",
+        "caratMinLab",
+        "caratMaxLab"
+      );
+    });
+
+    // Sync button states with hidden inputs on load
+    document.querySelectorAll(".filter-form").forEach((form) => {
+      const hiddenInputs = form.querySelectorAll('input[type="hidden"]');
+      hiddenInputs.forEach((input) => {
+        if (input.value) {
+          const buttons = form.querySelectorAll(
+            `button[onclick*="setValue('${input.id}', '"]`
+          );
+          buttons.forEach((btn) => {
+            if (
+              btn.textContent === input.value ||
+              btn.getAttribute("data-shape") === input.value
+            ) {
+              btn.classList.add("active");
+              console.log(`Synced ${input.id} with button ${btn.textContent}`);
+            }
+          });
+        }
       });
     });
   });
