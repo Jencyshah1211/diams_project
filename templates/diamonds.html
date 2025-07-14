@@ -1,402 +1,416 @@
 {% extends "base.html" %} {% block content %}
 <section class="page">
-  <!-- Natural / Lab Grown Toggle -->
-  <div class="type-toggle">
-    <button id="btnNatural" class="active" onclick="toggleForm('natural')">
-      NATURAL
-    </button>
-    <button id="btnLab" onclick="toggleForm('lab')">LAB GROWN</button>
+  <div id="loading" class="hidden">Loading...</div>
+  <div id="error" class="hidden"></div>
+  <div id="filterSummary"></div>
+
+  <div class="sort-container">
+    <div class="sort-group">
+      <label for="sortBy">Sort By:</label>
+      <select id="sortBy" name="sort_by">
+        <option value="amount_asc">Price: Low to High</option>
+        <option value="price_desc">Price: High to Low</option>
+      </select>
+    </div>
+    <button id="filterBtn" class="search-btn">Filter</button>
   </div>
 
-  <!-- Filters Section -->
-  <div class="diamond-filters">
-    <!-- NATURAL Form -->
-    <div id="formNatural" class="filter-form">
-      <form method="GET" action="/diamonds/filter" class="filter-container">
-        <input
-          type="hidden"
-          name="diamond_type"
-          id="diamondTypeNatural"
-          value="natural"
-        />
-
-        <!-- Shape Filter -->
-        <div class="filter-row shape-filter">
-          <label>Shape:</label>
-          <div class="shape-buttons">
-            {% for shape in "Round Oval Princess Emerald Radiant Cushion Pear
-            Marquise Asscher Heart".split() %}
-            <button
-              type="button"
-              onclick="setValue('shapeInput', '{{ shape|lower }}')"
-              class="shape-btn"
-              data-shape="{{ shape|lower }}"
-            >
-              <img
-                src="/static/images/{{ shape|lower }}.png"
-                alt="{{ shape }}"
-              />
-              <span>{{ shape }}</span>
-            </button>
-            {% endfor %}
-          </div>
-          <input type="hidden" name="shape" id="shapeInput" />
-        </div>
-
-        <!-- Carat Filter -->
-        <div class="filter-row range-filter">
-          <label>Carat:</label>
-          <div class="range-inputs">
-            <input
-              type="number"
-              step="0.01"
-              name="carat_min"
-              id="caratMinNatural"
-              placeholder="From"
-            />
-            <input
-              type="number"
-              step="0.01"
-              name="carat_max"
-              id="caratMaxNatural"
-              placeholder="To"
-            />
-          </div>
-          <div class="slider-container">
-            <input
-              type="range"
-              min="-10"
-              max="10"
-              step="0.01"
-              id="caratSliderMinNatural"
-              class="range-slider"
-            />
-            <input
-              type="range"
-              min="-10"
-              max="10"
-              step="0.01"
-              id="caratSliderMaxNatural"
-              class="range-slider"
-            />
-          </div>
-        </div>
-
-        <!-- Color Filter -->
-        <div class="filter-row">
-          <label>Color:</label>
-          <div class="button-group">
-            <button
-              type="button"
-              onclick="setValue('colorType', 'white')"
-              class="color-type-btn"
-            >
-              White
-            </button>
-            <button
-              type="button"
-              onclick="setValue('colorType', 'fancy')"
-              class="color-type-btn"
-            >
-              Fancy
-            </button>
-          </div>
-          <div class="color-buttons button-group">
-            {% for c in "D E F G H I J K L M N O-P Q-R S-T U-V W-X Y-Z".split()
-            %}
-            <button
-              type="button"
-              onclick="setValue('colorGrade', '{{ c }}')"
-              class="color-grade-btn"
-            >
-              {{ c }}
-            </button>
-            {% endfor %}
-          </div>
-          <input type="hidden" name="color_type" id="colorType" />
-          <input type="hidden" name="color_grade" id="colorGrade" />
-        </div>
-
-        <!-- Clarity Filter -->
-        <div class="filter-row">
-          <label>Clarity:</label>
-          <div class="button-group">
-            {% for clarity in "FL IF VVS1 VVS2 VS1 VS2 SI1 SI2".split() %}
-            <button
-              type="button"
-              onclick="setValue('clarityInput', '{{ clarity }}')"
-              class="clarity-btn"
-            >
-              {{ clarity }}
-            </button>
-            {% endfor %}
-          </div>
-          <input type="hidden" name="clarity" id="clarityInput" />
-        </div>
-
-        <!-- Certificate and Fluorescence Filter (Side by Side) -->
-        <div class="filter-row compact-group">
-          <div>
-            <label>Certificate:</label>
-            <div class="button-group">
-              {% for cert in "Certified Non-Certified".split() %}
-              <button
-                type="button"
-                onclick="setValue('certificateInput', '{{ cert }}')"
-                class="certificate-btn"
-              >
-                {{ cert }}
-              </button>
-              {% endfor %}
-            </div>
-            <input type="hidden" name="certificate" id="certificateInput" />
-          </div>
-          <div>
-            <label>Fluorescence:</label>
-            <div class="button-group">
-              {% for fluo in "None Faint Medium Strong V-Strong".split() %}
-              <button
-                type="button"
-                onclick="setValue('fluorescenceInput', '{{ fluo }}')"
-                class="fluorescence-btn"
-              >
-                {{ fluo }}
-              </button>
-              {% endfor %}
-            </div>
-            <input type="hidden" name="fluorescence" id="fluorescenceInput" />
-          </div>
-        </div>
-
-        <!-- Make and Stock No Filter (Side by Side) -->
-        <div class="filter-row compact-group">
-          <div>
-            <label>Make:</label>
-            <div class="button-group">
-              {% for make in "3EX EX-CUT 3VG+".split() %}
-              <button
-                type="button"
-                onclick="setValue('makeInput', '{{ make }}')"
-                class="make-btn"
-              >
-                {{ make }}
-              </button>
-              {% endfor %}
-            </div>
-            <input type="hidden" name="make" id="makeInput" />
-          </div>
-          <div>
-            <label>Stock No:</label>
-            <input type="text" name="stock_no" placeholder="Stock No." />
-          </div>
-        </div>
-
-        <!-- Buttons -->
-        <div class="button-row">
-          <button type="submit" class="search-btn">Search Diamonds</button>
-          <button
-            type="button"
-            onclick="resetForm('formLab')"
-            class="clear-btn"
-          >
-            Clear All
-          </button>
-        </div>
-      </form>
+  <div class="diamond-filters hidden">
+    <div class="type-toggle">
+      <button id="btnNatural" class="active" onclick="toggleForm('natural')">
+        NATURAL
+      </button>
+      <button id="btnLab" onclick="toggleForm('lab')">LAB GROWN</button>
     </div>
 
-    <!-- LAB GROWN Form -->
-    <div id="formLab" class="filter-form hidden">
-      <form method="GET" action="/diamonds/filter" class="filter-container">
-        <input
-          type="hidden"
-          name="diamond_type"
-          id="diamondTypeLab"
-          value="lab"
-        />
+    <!-- Filters Section -->
+    <div class="diamond-filters">
+      <!-- NATURAL Form -->
+      <div id="formNatural" class="filter-form">
+        <form method="GET" action="/diamonds/filter" class="filter-container">
+          <input
+            type="hidden"
+            name="diamond_type"
+            id="diamondTypeNatural"
+            value="natural"
+          />
 
-        <!-- Shape Filter -->
-        <div class="filter-row shape-filter">
-          <label>Shape:</label>
-          <div class="shape-buttons">
-            {% for shape in "Round Oval Princess Emerald Radiant Cushion Pear
-            Marquise Asscher Heart".split() %}
-            <button
-              type="button"
-              onclick="setValue('shapeInputLab', '{{ shape|lower }}')"
-              class="shape-btn"
-              data-shape="{{ shape|lower }}"
-            >
-              <img
-                src="/static/images/{{ shape|lower }}.png"
-                alt="{{ shape }}"
+          <!-- Shape Filter -->
+          <div class="filter-row shape-filter">
+            <label>Shape:</label>
+            <div class="shape-buttons">
+              {% for shape in "Round Oval Princess Emerald Radiant Cushion Pear
+              Marquise Asscher Heart".split() %}
+              <button
+                type="button"
+                onclick="setValue('shapeInput', '{{ shape|lower }}')"
+                class="shape-btn"
+                data-shape="{{ shape|lower }}"
+              >
+                <img
+                  src="/static/images/{{ shape|lower }}.png"
+                  alt="{{ shape }}"
+                />
+                <span>{{ shape }}</span>
+              </button>
+              {% endfor %}
+            </div>
+            <input type="hidden" name="shape" id="shapeInput" />
+          </div>
+
+          <!-- Carat Filter -->
+          <div class="filter-row range-filter">
+            <label>Carat:</label>
+            <div class="range-inputs">
+              <input
+                type="number"
+                step="0.01"
+                name="carat_min"
+                id="caratMinNatural"
+                placeholder="From"
               />
-              <span>{{ shape }}</span>
-            </button>
-            {% endfor %}
+              <input
+                type="number"
+                step="0.01"
+                name="carat_max"
+                id="caratMaxNatural"
+                placeholder="To"
+              />
+            </div>
+            <div class="slider-container">
+              <input
+                type="range"
+                min="-10"
+                max="10"
+                step="0.01"
+                id="caratSliderMinNatural"
+                class="range-slider"
+              />
+              <input
+                type="range"
+                min="-10"
+                max="10"
+                step="0.01"
+                id="caratSliderMaxNatural"
+                class="range-slider"
+              />
+            </div>
           </div>
-          <input type="hidden" name="shape" id="shapeInputLab" />
-        </div>
 
-        <!-- Carat Filter -->
-        <div class="filter-row range-filter">
-          <label>Carat:</label>
-          <div class="range-inputs">
-            <input
-              type="number"
-              step="0.01"
-              name="carat_min"
-              id="caratMinLab"
-              placeholder="From"
-            />
-            <input
-              type="number"
-              step="0.01"
-              name="carat_max"
-              id="caratMaxLab"
-              placeholder="To"
-            />
-          </div>
-          <div class="slider-container">
-            <input
-              type="range"
-              min="-10"
-              max="10"
-              step="0.01"
-              id="caratSliderMinLab"
-              class="range-slider"
-            />
-            <input
-              type="range"
-              min="-10"
-              max="10"
-              step="0.01"
-              id="caratSliderMaxLab"
-              class="range-slider"
-            />
-          </div>
-        </div>
-
-        <!-- Color Filter -->
-        <div class="filter-row">
-          <label>Color:</label>
-          <div class="button-group">
-            <button
-              type="button"
-              onclick="setValue('colorTypeLab', 'white')"
-              class="color-type-btn"
-            >
-              White
-            </button>
-          </div>
-          <div class="color-buttons button-group">
-            {% for c in "D E F G H I J K L M".split() %}
-            <button
-              type="button"
-              onclick="setValue('colorGradeLab', '{{ c }}')"
-              class="color-grade-btn"
-            >
-              {{ c }}
-            </button>
-            {% endfor %}
-          </div>
-          <input type="hidden" name="color_type" id="colorTypeLab" />
-          <input type="hidden" name="color_grade" id="colorGradeLab" />
-        </div>
-
-        <!-- Clarity Filter -->
-        <div class="filter-row">
-          <label>Clarity:</label>
-          <div class="button-group">
-            {% for clarity in "VVS1 VVS2 VS1 VS2 SI1 SI2".split() %}
-            <button
-              type="button"
-              onclick="setValue('clarityLab', '{{ clarity }}')"
-              class="clarity-btn"
-            >
-              {{ clarity }}
-            </button>
-            {% endfor %}
-          </div>
-          <input type="hidden" name="clarity" id="clarityLab" />
-        </div>
-
-        <!-- Certificate and Fluorescence Filter (Side by Side) -->
-        <div class="filter-row compact-group">
-          <div>
-            <label>Certificate:</label>
+          <!-- Color Filter -->
+          <div class="filter-row">
+            <label>Color:</label>
             <div class="button-group">
-              {% for cert in "Certified Non-Certified".split() %}
               <button
                 type="button"
-                onclick="setValue('certificateLab', '{{ cert }}')"
-                class="certificate-btn"
+                onclick="setValue('colorType', 'white')"
+                class="color-type-btn"
               >
-                {{ cert }}
+                White
+              </button>
+              <button
+                type="button"
+                onclick="setValue('colorType', 'fancy')"
+                class="color-type-btn"
+              >
+                Fancy
+              </button>
+            </div>
+            <div class="color-buttons button-group">
+              {% for c in "D E F G H I J K L M N O-P Q-R S-T U-V W-X
+              Y-Z".split() %}
+              <button
+                type="button"
+                onclick="setValue('colorGrade', '{{ c }}')"
+                class="color-grade-btn"
+              >
+                {{ c }}
               </button>
               {% endfor %}
             </div>
-            <input type="hidden" name="certificate" id="certificateLab" />
+            <input type="hidden" name="color_type" id="colorType" />
+            <input type="hidden" name="color_grade" id="colorGrade" />
           </div>
-          <div>
-            <label>Fluorescence:</label>
+
+          <!-- Clarity Filter -->
+          <div class="filter-row">
+            <label>Clarity:</label>
             <div class="button-group">
-              {% for fluo in "None Faint Medium Strong".split() %}
+              {% for clarity in "FL IF VVS1 VVS2 VS1 VS2 SI1 SI2".split() %}
               <button
                 type="button"
-                onclick="setValue('fluorescenceLab', '{{ fluo }}')"
-                class="fluorescence-btn"
+                onclick="setValue('clarityInput', '{{ clarity }}')"
+                class="clarity-btn"
               >
-                {{ fluo }}
+                {{ clarity }}
               </button>
               {% endfor %}
             </div>
-            <input type="hidden" name="fluorescence" id="fluorescenceLab" />
+            <input type="hidden" name="clarity" id="clarityInput" />
           </div>
-        </div>
 
-        <!-- Make and Stock No Filter (Side by Side) -->
-        <div class="filter-row compact-group">
-          <div>
-            <label>Make:</label>
-            <div class="button-group">
-              {% for make in "3EX EX-CUT".split() %}
+          <!-- Certificate and Fluorescence Filter (Side by Side) -->
+          <div class="filter-row compact-group">
+            <div>
+              <label>Certificate:</label>
+              <div class="button-group">
+                {% for cert in "Certified Non-Certified".split() %}
+                <button
+                  type="button"
+                  onclick="setValue('certificateInput', '{{ cert }}')"
+                  class="certificate-btn"
+                >
+                  {{ cert }}
+                </button>
+                {% endfor %}
+              </div>
+              <input type="hidden" name="certificate" id="certificateInput" />
+            </div>
+            <div>
+              <label>Fluorescence:</label>
+              <div class="button-group">
+                {% for fluo in "None Faint Medium Strong V-Strong".split() %}
+                <button
+                  type="button"
+                  onclick="setValue('fluorescenceInput', '{{ fluo }}')"
+                  class="fluorescence-btn"
+                >
+                  {{ fluo }}
+                </button>
+                {% endfor %}
+              </div>
+              <input type="hidden" name="fluorescence" id="fluorescenceInput" />
+            </div>
+          </div>
+
+          <!-- Make and Stock No Filter (Side by Side) -->
+          <div class="filter-row compact-group">
+            <div>
+              <label>Make:</label>
+              <div class="button-group">
+                {% for make in "3EX EX-CUT 3VG+".split() %}
+                <button
+                  type="button"
+                  onclick="setValue('makeInput', '{{ make }}')"
+                  class="make-btn"
+                >
+                  {{ make }}
+                </button>
+                {% endfor %}
+              </div>
+              <input type="hidden" name="make" id="makeInput" />
+            </div>
+            <div>
+              <label>Stock No:</label>
+              <input type="text" name="stock_no" placeholder="Stock No." />
+            </div>
+          </div>
+
+          <!-- Buttons -->
+          <div class="button-row">
+            <button type="submit" class="search-btn">Search Diamonds</button>
+            <button
+              type="button"
+              onclick="resetForm('formLab')"
+              class="clear-btn"
+            >
+              Clear All
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- LAB GROWN Form -->
+      <div id="formLab" class="filter-form hidden">
+        <form method="GET" action="/diamonds/filter" class="filter-container">
+          <input
+            type="hidden"
+            name="diamond_type"
+            id="diamondTypeLab"
+            value="lab"
+          />
+
+          <!-- Shape Filter -->
+          <div class="filter-row shape-filter">
+            <label>Shape:</label>
+            <div class="shape-buttons">
+              {% for shape in "Round Oval Princess Emerald Radiant Cushion Pear
+              Marquise Asscher Heart".split() %}
               <button
                 type="button"
-                onclick="setValue('makeLab', '{{ make }}')"
-                class="make-btn"
+                onclick="setValue('shapeInputLab', '{{ shape|lower }}')"
+                class="shape-btn"
+                data-shape="{{ shape|lower }}"
               >
-                {{ make }}
+                <img
+                  src="/static/images/{{ shape|lower }}.png"
+                  alt="{{ shape }}"
+                />
+                <span>{{ shape }}</span>
               </button>
               {% endfor %}
             </div>
-            <input type="hidden" name="make" id="makeLab" />
+            <input type="hidden" name="shape" id="shapeInputLab" />
           </div>
-          <div>
-            <label>Stock No:</label>
-            <input type="text" name="stock_no" placeholder="Stock No." />
-          </div>
-        </div>
 
-        <!-- Buttons -->
-        <div class="button-row">
-          <button type="submit" class="search-btn">Search Diamonds</button>
-          <button
-            type="button"
-            onclick="resetForm('formLab')"
-            class="clear-btn"
-          >
-            Clear All
-          </button>
-        </div>
-      </form>
+          <!-- Carat Filter -->
+          <div class="filter-row range-filter">
+            <label>Carat:</label>
+            <div class="range-inputs">
+              <input
+                type="number"
+                step="0.01"
+                name="carat_min"
+                id="caratMinLab"
+                placeholder="From"
+              />
+              <input
+                type="number"
+                step="0.01"
+                name="carat_max"
+                id="caratMaxLab"
+                placeholder="To"
+              />
+            </div>
+            <div class="slider-container">
+              <input
+                type="range"
+                min="-10"
+                max="10"
+                step="0.01"
+                id="caratSliderMinLab"
+                class="range-slider"
+              />
+              <input
+                type="range"
+                min="-10"
+                max="10"
+                step="0.01"
+                id="caratSliderMaxLab"
+                class="range-slider"
+              />
+            </div>
+          </div>
+
+          <!-- Color Filter -->
+          <div class="filter-row">
+            <label>Color:</label>
+            <div class="button-group">
+              <button
+                type="button"
+                onclick="setValue('colorTypeLab', 'white')"
+                class="color-type-btn"
+              >
+                White
+              </button>
+            </div>
+            <div class="color-buttons button-group">
+              {% for c in "D E F G H I J K L M".split() %}
+              <button
+                type="button"
+                onclick="setValue('colorGradeLab', '{{ c }}')"
+                class="color-grade-btn"
+              >
+                {{ c }}
+              </button>
+              {% endfor %}
+            </div>
+            <input type="hidden" name="color_type" id="colorTypeLab" />
+            <input type="hidden" name="color_grade" id="colorGradeLab" />
+          </div>
+
+          <!-- Clarity Filter -->
+          <div class="filter-row">
+            <label>Clarity:</label>
+            <div class="button-group">
+              {% for clarity in "VVS1 VVS2 VS1 VS2 SI1 SI2".split() %}
+              <button
+                type="button"
+                onclick="setValue('clarityLab', '{{ clarity }}')"
+                class="clarity-btn"
+              >
+                {{ clarity }}
+              </button>
+              {% endfor %}
+            </div>
+            <input type="hidden" name="clarity" id="clarityLab" />
+          </div>
+
+          <!-- Certificate and Fluorescence Filter (Side by Side) -->
+          <div class="filter-row compact-group">
+            <div>
+              <label>Certificate:</label>
+              <div class="button-group">
+                {% for cert in "Certified Non-Certified".split() %}
+                <button
+                  type="button"
+                  onclick="setValue('certificateLab', '{{ cert }}')"
+                  class="certificate-btn"
+                >
+                  {{ cert }}
+                </button>
+                {% endfor %}
+              </div>
+              <input type="hidden" name="certificate" id="certificateLab" />
+            </div>
+            <div>
+              <label>Fluorescence:</label>
+              <div class="button-group">
+                {% for fluo in "None Faint Medium Strong".split() %}
+                <button
+                  type="button"
+                  onclick="setValue('fluorescenceLab', '{{ fluo }}')"
+                  class="fluorescence-btn"
+                >
+                  {{ fluo }}
+                </button>
+                {% endfor %}
+              </div>
+              <input type="hidden" name="fluorescence" id="fluorescenceLab" />
+            </div>
+          </div>
+
+          <!-- Make and Stock No Filter (Side by Side) -->
+          <div class="filter-row compact-group">
+            <div>
+              <label>Make:</label>
+              <div class="button-group">
+                {% for make in "3EX EX-CUT".split() %}
+                <button
+                  type="button"
+                  onclick="setValue('makeLab', '{{ make }}')"
+                  class="make-btn"
+                >
+                  {{ make }}
+                </button>
+                {% endfor %}
+              </div>
+              <input type="hidden" name="make" id="makeLab" />
+            </div>
+            <div>
+              <label>Stock No:</label>
+              <input type="text" name="stock_no" placeholder="Stock No." />
+            </div>
+          </div>
+
+          <!-- Buttons -->
+          <div class="button-row">
+            <button type="submit" class="search-btn">Search Diamonds</button>
+            <button
+              type="button"
+              onclick="resetForm('formLab')"
+              class="clear-btn"
+            >
+              Clear All
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   </div>
-  <!-- Diamond Grid -->
   <div class="diamond-grid">
-    {% if diamonds %}
     <h2>Diamond Collection</h2>
-    {% for diamond in diamonds %}
+    {% if diamonds %} {% for diamond in diamonds %}
     <div class="card">
       <img src="{{ diamond.image_url }}" alt="{{ diamond.shape }} diamond" />
       <h3>{{ diamond.shape }} Diamond</h3>
@@ -404,19 +418,19 @@
         Carat: {{ diamond.carat }} | Color: {{ diamond.color }} | Clarity: {{
         diamond.clarity }} | Cut: {{ diamond.cut }}
       </p>
-      <p><strong>₹{{ diamond.price }}</strong></p>
+      <p><strong>₹{{ diamond.amount }}</strong></p>
       <a href="/diamond/{{ diamond.id }}" class="view-details-btn"
         >View Details</a
       >
     </div>
     {% endfor %} {% else %}
-    <p>No diamonds found. Try adjusting your filters.</p>
+    <p>No diamonds found.</p>
     {% endif %}
   </div>
 </section>
 
-<!-- JavaScript -->
 <script>
+  // Toggle between Natural and Lab Grown forms
   function toggleForm(type) {
     const formNatural = document.getElementById("formNatural");
     const formLab = document.getElementById("formLab");
@@ -436,279 +450,81 @@
     }
   }
 
-  function setValue(inputId, value) {
+  // Set value for hidden inputs and toggle active class on buttons
+  function setValue(inputId, value, event = null) {
     const input = document.getElementById(inputId);
-    if (input) {
-      input.value = value;
-    }
+    if (!input) return;
 
-    const button = event.currentTarget;
-    const filterRow = button.closest(".filter-row");
-    if (!filterRow) return;
+    input.value = value;
 
-    // Remove 'active' class from all buttons in the same group
-    const buttons = filterRow.querySelectorAll(
-      "button:not(.color-buttons button)"
-    );
-    buttons.forEach((btn) => btn.classList.remove("active"));
+    if (event) {
+      const button = event.currentTarget;
+      const filterRow = button.closest(".filter-row");
 
-    button.classList.add("active");
+      if (filterRow) {
+        // Remove active class from all buttons in the same group
+        const buttons = filterRow.querySelectorAll("button");
+        buttons.forEach((btn) => btn.classList.remove("active"));
 
-    // Special handling for color buttons
-    if (inputId === "colorType" || inputId === "colorTypeLab") {
-      const colorButtons = filterRow.querySelectorAll(".color-buttons button");
-      colorButtons.forEach((btn) => btn.classList.remove("active"));
-    } else if (inputId === "colorGrade" || inputId === "colorGradeLab") {
-      const colorTypeButtons = filterRow.querySelectorAll(
-        "button:not(.color-buttons button)"
-      );
-      colorTypeButtons.forEach((btn) => btn.classList.remove("active"));
-      const colorButtons = filterRow.querySelectorAll(".color-buttons button");
-      colorButtons.forEach((btn) => btn.classList.remove("active"));
-      button.classList.add("active");
+        // Add active class to clicked button
+        button.classList.add("active");
+      }
     }
   }
 
+  // Reset form to initial state
   function resetForm(formId) {
-    const form = document.getElementById(formId).querySelector("form");
+    const form = document.getElementById(formId)?.querySelector("form");
+    if (!form) return;
+
     form.reset();
 
-    // Remove 'active' class from all buttons in the form
+    // Remove active class from all buttons
     const buttons = form.querySelectorAll("button");
     buttons.forEach((btn) => btn.classList.remove("active"));
 
-    // Clear hidden inputs
+    // Clear hidden inputs (except diamond_type)
     const hiddenInputs = form.querySelectorAll('input[type="hidden"]');
     hiddenInputs.forEach((input) => {
-      if (input.name !== "diamond_type") {
-        input.value = "";
-      }
+      if (input.name !== "diamond_type") input.value = "";
     });
-
-    // Reset sliders
-    const sliders = form.querySelectorAll(".range-slider");
-    sliders.forEach((slider) => {
-      if (slider.id.includes("Min")) {
-        slider.value = slider.min;
-      } else {
-        slider.value = slider.max;
-      }
-    });
-
-    // Update slider inputs
-    const inputs = form.querySelectorAll(".range-inputs input");
-    inputs.forEach((input) => (input.value = ""));
   }
 
-  // Updated Slider Setup Function
-  function setupSliders(formId, caratMinId, caratMaxId) {
-    const form = document.getElementById(formId);
-    if (!form) return;
+  // Toggle filter form visibility
+  function toggleFilterForm() {
+    const filterSection = document.querySelector(".diamond-filters");
+    const filterBtn = document.getElementById("filterBtn");
 
-    const caratMinSlider = form.querySelector(`#${caratMinId}`);
-    const caratMaxSlider = form.querySelector(`#${caratMaxId}`);
-    const caratMinInput = form.querySelector(
-      `#${caratMinId.replace("Slider", "")}`
-    );
-    const caratMaxInput = form.querySelector(
-      `#${caratMaxId.replace("Slider", "")}`
-    );
+    if (filterSection && filterBtn) {
+      filterSection.classList.toggle("hidden");
+      filterBtn.textContent = filterSection.classList.contains("hidden")
+        ? "Filter"
+        : "Close Filter";
 
-    if (
-      !caratMinSlider ||
-      !caratMaxSlider ||
-      !caratMinInput ||
-      !caratMaxInput
-    ) {
-      console.error("Slider or input element not found:", {
-        caratMinId,
-        caratMaxId,
+      // Show natural form by default when opening
+      if (!filterSection.classList.contains("hidden")) {
+        toggleForm("natural");
+      }
+    }
+  }
+
+  // Initialize
+  document.addEventListener("DOMContentLoaded", function () {
+    const filterBtn = document.getElementById("filterBtn");
+
+    if (filterBtn) {
+      // Add click event listener to filter button
+      filterBtn.addEventListener("click", toggleFilterForm);
+    }
+
+    // Handle form submissions
+    document.querySelectorAll(".filter-container").forEach((form) => {
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        console.log("Form submitted:", new FormData(form));
+        // Add your form submission logic here
       });
-      return;
-    }
-
-    // Sync sliders with inputs
-    caratMinSlider.addEventListener("input", () => {
-      const minValue = parseFloat(caratMinSlider.value);
-      const maxValue = parseFloat(caratMaxSlider.value);
-      if (minValue > maxValue) {
-        caratMinSlider.value = maxValue;
-      }
-      caratMinInput.value = caratMinSlider.value;
     });
-
-    caratMaxSlider.addEventListener("input", () => {
-      const minValue = parseFloat(caratMinSlider.value);
-      const maxValue = parseFloat(caratMaxSlider.value);
-      if (maxValue < minValue) {
-        caratMaxSlider.value = minValue;
-      }
-      caratMaxInput.value = caratMaxSlider.value;
-    });
-
-    // Sync inputs with sliders
-    caratMinInput.addEventListener("input", () => {
-      let value = parseFloat(caratMinInput.value) || -10;
-      if (value < caratMinSlider.min) value = caratMinSlider.min;
-      if (value > caratMaxSlider.value) value = caratMaxSlider.value;
-      caratMinSlider.value = value;
-      caratMinInput.value = value;
-    });
-
-    caratMaxInput.addEventListener("input", () => {
-      let value = parseFloat(caratMaxInput.value) || 10;
-      if (value > caratMaxSlider.max) value = caratMaxSlider.max;
-      if (value < caratMinSlider.value) value = caratMinSlider.value;
-      caratMaxSlider.value = value;
-      caratMaxInput.value = value;
-    });
-  }
-
-  document.addEventListener("DOMContentLoaded", () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const type = urlParams.get("type") || urlParams.get("diamond_type");
-    const formNatural = document.getElementById("formNatural");
-    const formLab = document.getElementById("formLab");
-
-    // Toggle the correct form based on URL parameter
-    if (type === "natural") {
-      toggleForm("natural");
-    } else if (type === "lab") {
-      toggleForm("lab");
-    } else {
-      toggleForm("natural");
-    }
-
-    // Setup sliders for both forms
-    setupSliders(
-      "formNatural",
-      "caratSliderMinNatural",
-      "caratSliderMaxNatural"
-    );
-    setupSliders("formLab", "caratSliderMinLab", "caratSliderMaxLab");
-
-    // Apply 'active' class to buttons based on URL parameters
-    const applyActiveClass = (inputId, value, btnClass) => {
-      if (value) {
-        const input = document.getElementById(inputId);
-        if (input) {
-          input.value = value;
-          const buttons = document.querySelectorAll(
-            `#${
-              formNatural.classList.contains("hidden")
-                ? "formLab"
-                : "formNatural"
-            } .${btnClass}`
-          );
-          buttons.forEach((btn) => {
-            const btnValue =
-              btnClass === "shape-btn"
-                ? btn.dataset.shape
-                : btn.textContent.trim().toLowerCase();
-            if (btnValue === value.toLowerCase()) {
-              btn.classList.add("active");
-            }
-          });
-        }
-      }
-    };
-
-    applyActiveClass("shapeInput", urlParams.get("shape"), "shape-btn");
-    applyActiveClass("shapeInputLab", urlParams.get("shape"), "shape-btn");
-    applyActiveClass("qualityInput", urlParams.get("quality"), "quality-btn");
-    applyActiveClass("qualityLab", urlParams.get("quality"), "quality-btn");
-    applyActiveClass(
-      "colorType",
-      urlParams.get("color_type"),
-      "color-type-btn"
-    );
-    applyActiveClass(
-      "colorTypeLab",
-      urlParams.get("color_type"),
-      "color-type-btn"
-    );
-    applyActiveClass(
-      "colorGrade",
-      urlParams.get("color_grade"),
-      "color-grade-btn"
-    );
-    applyActiveClass(
-      "colorGradeLab",
-      urlParams.get("color_grade"),
-      "color-grade-btn"
-    );
-    applyActiveClass("clarityInput", urlParams.get("clarity"), "clarity-btn");
-    applyActiveClass("clarityLab", urlParams.get("clarity"), "clarity-btn");
-    applyActiveClass(
-      "certificateInput",
-      urlParams.get("certificate"),
-      "certificate-btn"
-    );
-    applyActiveClass(
-      "certificateLab",
-      urlParams.get("certificate"),
-      "certificate-btn"
-    );
-    applyActiveClass(
-      "fluorescenceInput",
-      urlParams.get("fluorescence"),
-      "fluorescence-btn"
-    );
-    applyActiveClass(
-      "fluorescenceLab",
-      urlParams.get("fluorescence"),
-      "fluorescence-btn"
-    );
-    applyActiveClass("makeInput", urlParams.get("make"), "make-btn");
-    applyActiveClass("makeLab", urlParams.get("make"), "make-btn");
-    applyActiveClass(
-      "returnableInput",
-      urlParams.get("returnable"),
-      "returnable-btn"
-    );
-    applyActiveClass(
-      "returnableLab",
-      urlParams.get("returnable"),
-      "returnable-btn"
-    );
-
-    // Set input values for text/number fields and sliders
-    const setInputValue = (name, elementType) => {
-      const value = urlParams.get(name);
-      if (value) {
-        const input = document.querySelector(
-          `#${
-            formNatural.classList.contains("hidden") ? "formLab" : "formNatural"
-          } [name="${name}"]`
-        );
-        const sliderMin = document.querySelector(
-          `#${
-            formNatural.classList.contains("hidden") ? "formLab" : "formNatural"
-          } #${name.replace("_min", "SliderMin")}${
-            formNatural.classList.contains("hidden") ? "Lab" : "Natural"
-          }`
-        );
-        const sliderMax = document.querySelector(
-          `#${
-            formNatural.classList.contains("hidden") ? "formLab" : "formNatural"
-          } #${name.replace("_max", "SliderMax")}${
-            formNatural.classList.contains("hidden") ? "Lab" : "Natural"
-          }`
-        );
-        if (input) {
-          input.value = value;
-        }
-        if (name.includes("_min") && sliderMin) {
-          sliderMin.value = value;
-        } else if (name.includes("_max") && sliderMax) {
-          sliderMax.value = value;
-        }
-      }
-    };
-
-    setInputValue("carat_min", "input");
-    setInputValue("carat_max", "input");
-    setInputValue("stock_no", "input");
   });
 </script>
 {% endblock %}
