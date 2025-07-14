@@ -14,6 +14,7 @@ from dotenv import load_dotenv
 import os
 from datetime import datetime, date
 import mysql.connector
+from mysql.connector import Error
 import logging
 import pandas as pd
 import uuid
@@ -97,75 +98,127 @@ def diamonds():
 
 @app.route("/diamonds/filter")
 def filter_diamonds():
-    conn = mysql.connector.connect(**mysql_config)
-    cursor = conn.cursor(dictionary=True)
+    try:
+        conn = mysql.connector.connect(**mysql_config)
+        cursor = conn.cursor(dictionary=True)
 
-    query = "SELECT * FROM diamonds WHERE stock_status = 'in_stock'"
-    params = {}
+        query = "SELECT * FROM diamonds WHERE stock_status = 'in_stock'"
+        params = {}
 
-    # Handle filter parameters
-    diamond_type = request.args.get("diamond_type")
-    shape = request.args.get("shape")
-    carat_min = request.args.get("carat_min")
-    carat_max = request.args.get("carat_max")
-    color_type = request.args.get("color_type")
-    color_grade = request.args.get("color_grade")
-    clarity = request.args.get("clarity")
-    certificate = request.args.get("certificate")
-    fluorescence = request.args.get("fluorescence")
-    make = request.args.get("make")
-    stock_no = request.args.get("stock_no")
+        # Valid options
+        valid_shapes = [
+            "round",
+            "oval",
+            "princess",
+            "emerald",
+            "radiant",
+            "cushion",
+            "pear",
+            "marquise",
+            "asscher",
+            "heart",
+        ]
+        valid_color_types = ["white", "fancy"]
+        valid_color_grades = [
+            "D",
+            "E",
+            "F",
+            "G",
+            "H",
+            "I",
+            "J",
+            "K",
+            "L",
+            "M",
+            "N",
+            "O-P",
+            "Q-R",
+            "S-T",
+            "U-V",
+            "W-X",
+            "Y-Z",
+        ]
+        valid_clarities = ["FL", "IF", "VVS1", "VVS2", "VS1", "VS2", "SI1", "SI2"]
+        valid_certificates = ["Certified", "Non-Certified"]
+        valid_fluorescences = ["None", "Faint", "Medium", "Strong", "V-Strong"]
+        valid_makes = ["3EX", "EX-CUT", "3VG+"]
+        valid_diamond_types = ["natural", "lab"]
 
-    conditions = []
-    if diamond_type:
-        conditions.append("diamond_type = %(diamond_type)s")
-        params["diamond_type"] = diamond_type
-    if shape:
-        conditions.append("shape = %(shape)s")
-        params["shape"] = shape
-    if carat_min and carat_max:
-        conditions.append("carat BETWEEN %(carat_min)s AND %(carat_max)s")
-        params["carat_min"] = float(carat_min)
-        params["carat_max"] = float(carat_max)
-    if color_type:
-        conditions.append("color LIKE %(color_type)s%%")
-        params["color_type"] = color_type
-    if color_grade:
-        conditions.append("color = %(color_grade)s")
-        params["color_grade"] = color_grade
-    if clarity:
-        conditions.append("clarity = %(clarity)s")
-        params["clarity"] = clarity
-    if certificate:
-        conditions.append("is_certified = %(certificate)s")
-        params["certificate"] = certificate.lower() == "certified"
-    if fluorescence:
-        conditions.append("fluorescence = %(fluorescence)s")
-        params["fluorescence"] = fluorescence
-    if make:
-        conditions.append("cut = %(make)s")
-        params["make"] = make
-    if stock_no:
-        conditions.append("stock_number = %(stock_no)s")
-        params["stock_no"] = stock_no
+        # Handle filter parameters
+        diamond_type = request.args.get("diamond_type")
+        shape = request.args.get("shape")
+        carat_min = request.args.get("carat_min")
+        carat_max = request.args.get("carat_max")
+        color_type = request.args.get("color_type")
+        color_grade = request.args.get("color_grade")
+        clarity = request.args.get("clarity")
+        certificate = request.args.get("certificate")
+        fluorescence = request.args.get("fluorescence")
+        make = request.args.get("make")
+        stock_no = request.args.get("stock_no")
 
-    if conditions:
-        query += " AND " + " AND ".join(conditions)
+        conditions = []
+        if diamond_type and diamond_type in valid_diamond_types:
+            conditions.append("diamond_type = %(diamond_type)s")
+            params["diamond_type"] = diamond_type
+        if shape and shape in valid_shapes:
+            conditions.append("shape = %(shape)s")
+            params["shape"] = shape
+        if carat_min and carat_max:
+            try:
+                carat_min = float(carat_min)
+                carat_max = float(carat_max)
+                if -10 <= carat_min <= carat_max <= 10:
+                    conditions.append("carat BETWEEN %(carat_min)s AND %(carat_max)s")
+                    params["carat_min"] = carat_min
+                    params["carat_max"] = carat_max
+            except ValueError:
+                pass
+        if color_type and color_type in valid_color_types:
+            conditions.append("color LIKE %(color_type)s%%")
+            params["color_type"] = color_type
+        if color_grade and color_grade in valid_color_grades:
+            conditions.append("color = %(color_grade)s")
+            params["color_grade"] = color_grade
+        if clarity and clarity in valid_clarities:
+            conditions.append("clarity = %(clarity)s")
+            params["clarity"] = clarity
+        if certificate and certificate in valid_certificates:
+            conditions.append("is_certified = %(certificate)s")
+            params["certificate"] = certificate.lower() == "certified"
+        if fluorescence and fluorescence in valid_fluorescences:
+            conditions.append("fluorescence = %(fluorescence)s")
+            params["fluorescence"] = fluorescence
+        if make and make in valid_makes:
+            conditions.append("cut = %(make)s")
+            params["make"] = make
+        if stock_no:
+            conditions.append("stock_number = %(stock_no)s")
+            params["stock_no"] = stock_no.strip()
 
-    # Handle sorting
-    sort_by = request.args.get("sort_by", "amount_asc")
-    if sort_by == "price_asc":
-        query += " ORDER BY amount ASC"
-    elif sort_by == "price_desc":
-        query += " ORDER BY amount DESC"
-    else:
-        query += " ORDER BY amount ASC"
+        if conditions:
+            query += " AND " + " AND ".join(conditions)
 
-    cursor.execute(query, params)
-    diamonds = cursor.fetchall()
-    conn.close()
+        # Handle sorting
+        sort_by = request.args.get("sort_by", "amount_asc")
+        if sort_by == "price_asc":
+            query += " ORDER BY amount ASC"
+        elif sort_by == "price_desc":
+            query += " ORDER BY amount DESC"
+        else:
+            query += " ORDER BY amount ASC"
 
-    return jsonify(diamonds)
+        cursor.execute(query, params)
+        diamonds = cursor.fetchall()
+        conn.close()
+        return jsonify(
+            {
+                "diamonds": diamonds,
+                "message": "No diamonds match your criteria." if not diamonds else "",
+            }
+        )
+    except Error as e:
+        return jsonify({"error": "Database error occurred"}), 500
 
 
 @app.route("/jewelry")
