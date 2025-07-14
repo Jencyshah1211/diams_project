@@ -315,7 +315,31 @@ body {
   color: #4b6cb7;
   transform: translateY(-2px);
 }
+/* New styles for filter buttons */
+.shape-btn.active,
+.color-grade-btn.active,
+.clarity-btn.active,
+.certificate-btn.active,
+.fluorescence-btn.active,
+.make-btn.active,
+.color-type-btn.active {
+  background: linear-gradient(90deg, #4b6cb7, #182848);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(75, 108, 183, 0.4);
+  transform: scale(1.02);
+}
 
+.shape-btn:hover:not(.active),
+.color-grade-btn:hover:not(.active),
+.clarity-btn:hover:not(.active),
+.certificate-btn:hover:not(.active),
+.fluorescence-btn:hover:not(.active),
+.make-btn:hover:not(.active),
+.color-type-btn:hover:not(.active) {
+  background: rgba(75, 108, 183, 0.1);
+  color: #4b6cb7;
+  transform: translateY(-2px);
+}
 /* Diamond Page - Modern Form Filters */
 
 /* Main Filters Container */
@@ -457,20 +481,22 @@ body {
   color: #2d3748;
 }
 
+.shape-btn.active {
+  background: linear-gradient(90deg, #4b6cb7, #182848);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 4px 16px rgba(75, 108, 183, 0.4);
+  transform: scale(1.02);
+}
 .shape-btn:hover:not(.active) {
   background: #f1f3f5;
   transform: translateY(-2px);
 }
 
-.shape-btn.active {
-  background: linear-gradient(90deg, #4b6cb7, #182848);
-  border-color: transparent;
-  color: #fff;
-}
-
 .shape-btn.active span {
   color: #fff;
 }
+
 
 /* Range Filters (Carat, Price) */
 .range-filter .range-inputs {
