@@ -417,7 +417,8 @@
       <h3>{{ diamond.shape }} Diamond</h3>
       <p>
         Carat: {{ diamond.carat }} | Color: {{ diamond.color }} | Clarity: {{
-        diamond.clarity }} | Cut: {{ diamond.cut }}
+        diamond.clarity }} | Cut: {{ diamond.cut }} | Type: {{
+        diamond.diamond_type }}
       </p>
       <p><strong>₹{{ diamond.amount }}</strong></p>
       <a href="/diamond/{{ diamond.id }}" class="view-details-btn"
@@ -584,6 +585,57 @@
       maxSlider.value = maxInput.value;
     });
   }
+
+  // Function to update the diamond grid with search results
+  function updateDiamondGrid(diamonds) {
+    const diamondGrid = document.querySelector(".diamond-grid");
+    const sortBy = document.getElementById("sortBy").value;
+
+    // Clear existing content
+    diamondGrid.innerHTML = "<h2>Diamond Collection</h2>";
+
+    if (diamonds && diamonds.length > 0) {
+      // Sort diamonds based on current sort option
+      diamonds.sort((a, b) => {
+        return sortBy === "amount_asc"
+          ? a.amount - b.amount
+          : b.amount - a.amount;
+      });
+
+      // Append diamond cards
+      diamonds.forEach((diamond) => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+        <img src="${diamond.image_url}" alt="${diamond.shape} diamond" />
+        <h3>${diamond.shape} Diamond</h3>
+        <p>
+          Carat: ${diamond.carat} | Color: ${diamond.color} | Clarity: ${diamond.clarity} | Cut: ${diamond.cut} | Type: ${diamond.diamond_type}
+        </p>
+        <p><strong>₹${diamond.amount}</strong></p>
+        <a href="/diamond/${diamond.id}" class="view-details-btn">View Details</a>
+      `;
+        diamondGrid.appendChild(card);
+      });
+    } else {
+      diamondGrid.innerHTML += "<p>No diamonds found.</p>";
+    }
+  }
+
+  // Function to display loading state
+  function showLoading(show) {
+    const loading = document.getElementById("loading");
+    loading.classList.toggle("hidden", !show);
+  }
+
+  // Function to display error message
+  function showError(message) {
+    const error = document.getElementById("error");
+    error.textContent = message || "An error occurred while fetching diamonds.";
+    error.classList.remove("hidden");
+    setTimeout(() => error.classList.add("hidden"), 5000);
+  }
+
   // Initialize and sync button states with hidden inputs
   document.addEventListener("DOMContentLoaded", function () {
     const filterBtn = document.getElementById("filterBtn");
@@ -599,11 +651,38 @@
 
     // Handle form submissions
     document.querySelectorAll(".filter-container").forEach((form) => {
-      form.addEventListener("submit", function (e) {
+      form.addEventListener("submit", async function (e) {
         e.preventDefault();
-        console.log("Form submitted:", new FormData(form));
-        // Add your form submission logic here
+        const formData = new FormData(form);
+        const data = {};
+        formData.forEach((value, key) => {
+          if (value) data[key] = value;
+        });
+
+        showLoading(true);
+        try {
+          const response = await fetch("/diamonds/filter", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(data),
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const result = await response.json();
+          updateDiamondGrid(result.diamonds);
+        } catch (error) {
+          console.error("Error fetching diamonds:", error);
+          showError("Failed to load diamonds. Please try again.");
+        } finally {
+          showLoading(false);
+        }
       });
+
       setupCaratSlider(
         "caratSliderMinNatural",
         "caratSliderMaxNatural",
