@@ -8,6 +8,7 @@ from flask import (
     flash,
     jsonify,
 )
+
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
@@ -22,6 +23,7 @@ import uuid
 
 app = Flask(__name__)
 app.secret_key = "supersecretkey"  # Change to a secure key in production
+
 load_dotenv()
 
 # Configure logging
@@ -86,20 +88,46 @@ def home():
 
 @app.route("/diamonds")
 def diamonds():
-    conn = mysql.connector.connect(**mysql_config)
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute(
-        "SELECT diamond_id, diamond_type, shape, carat, color, clarity, cut, amount, image_url FROM diamonds WHERE stock_status = 'in_stock' ORDER BY amount ASC"
-    )
-    diamonds = cursor.fetchall()
-    conn.close()
-    # print("jency diamonds", diamonds)
-    return render_template("diamonds.html", diamonds=diamonds)
+    user_id = session.get("user_id")
+    user_type = session.get("user_type", "guest")
+    try:
+        conn = mysql.connector.connect(**mysql_config)
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute(
+            "SELECT diamond_id, diamond_type, shape, carat, color, clarity, cut, amount, image_url FROM diamonds WHERE stock_status = 'in_stock' ORDER BY amount ASC"
+        )
+        diamonds = cursor.fetchall()
+        wishlist_diamond_ids = []
+        if user_type == "buyer" and user_id:
+            cursor.execute(
+                "SELECT DISTINCT diamond_id FROM wishlist WHERE user_id = %s",
+                (user_id,),
+            )
+            wishlist_diamond_ids = [
+                str(row["diamond_id"]) for row in cursor.fetchall()
+            ]  # Convert to strings
+
+        conn.close()
+        print("jency wishlist", wishlist_diamond_ids)
+        return render_template(
+            "diamonds.html",
+            diamonds=diamonds,
+            user_type=user_type,
+            wishlist_diamond_ids=wishlist_diamond_ids,
+        )
+    except Error as e:
+        logging.error(f"Error fetching diamonds: {e}")
+        flash("Error loading diamonds", "error")
+        return render_template(
+            "diamonds.html", diamonds=[], user_type=user_type, wishlist_diamond_ids=[]
+        )
 
 
 @app.route("/diamonds/filter", methods=["POST"])
 def filter_diamonds():
     try:
+        user_id = session.get("user_id")
+        user_type = session.get("user_type", "guest")
         conn = mysql.connector.connect(**mysql_config)
         cursor = conn.cursor(dictionary=True)
 
@@ -224,6 +252,15 @@ def filter_diamonds():
 
         cursor.execute(query, params)
         diamonds = cursor.fetchall()
+        wishlist_diamond_ids = []
+        if user_type == "buyer" and user_id:
+            cursor.execute(
+                "SELECT DISTINCT diamond_id FROM wishlist WHERE user_id = %s",
+                (user_id,),
+            )
+            wishlist_diamond_ids = [
+                str(row["diamond_id"]) for row in cursor.fetchall()
+            ]  # Convert to strings
 
         cursor.close()
         conn.close()
@@ -231,6 +268,8 @@ def filter_diamonds():
         return jsonify(
             {
                 "diamonds": diamonds,
+                "user_type": user_type,
+                "wishlist_diamond_ids": wishlist_diamond_ids,
                 "message": "No diamonds match your criteria." if not diamonds else "",
             }
         )
@@ -272,8 +311,129 @@ def cart():
 @role_required("buyer", allow_guest=True)
 def wishlist():
     user_type = session.get("user_type", "guest")
+    user_id = session.get("user_id")
     items = []
+    if user_type == "buyer" and user_id:
+        try:
+            conn = mysql.connector.connect(**mysql_config)
+            cursor = conn.cursor(dictionary=True)
+            cursor.execute(
+                """
+                SELECT DISTINCT d.diamond_id, d.diamond_type, d.shape, d.carat, d.color, d.clarity,
+                       d.cut, d.amount, d.image_url
+                FROM diamonds d
+                JOIN wishlist w ON d.diamond_id = w.diamond_id
+                WHERE w.user_id = %s
+                """,
+                (user_id,),
+            )
+            items = cursor.fetchall()
+            cursor.close()
+            conn.close()
+        except Error as e:
+            logging.error(f"Error fetching wishlist: {e.errno}, {e.msg}")
+            flash("Error loading wishlist", "error")
     return render_template("wishlist.html", user_type=user_type, items=items)
+
+
+@app.route("/wishlist/toggle", methods=["POST"])
+@role_required("buyer", allow_guest=True)
+def toggle_wishlist():
+    user_type = session.get("user_type", "guest")
+    user_id = session.get("user_id")
+    if user_type == "guest":
+        return (
+            jsonify(
+                {"success": False, "message": "Please log in to manage your wishlist"}
+            ),
+            401,
+        )
+
+    diamond_id = request.form.get("diamond_id")
+    if not diamond_id:
+        return jsonify({"success": False, "message": "Diamond ID is required"}), 400
+
+    try:
+        diamond_id = int(diamond_id)
+    except ValueError:
+        return (
+            jsonify({"success": False, "message": "Invalid Diamond ID format"}),
+            400,
+        )
+
+    logging.info(f"Toggle wishlist: user_id={user_id}, diamond_id={diamond_id}")
+
+    conn = None
+    cursor = None
+
+    try:
+        conn = mysql.connector.connect(**mysql_config)
+        cursor = conn.cursor(dictionary=True)
+
+        # Check if item exists in wishlist
+        cursor.execute(
+            "SELECT id FROM wishlist WHERE user_id = %s AND diamond_id = %s",
+            (user_id, diamond_id),
+        )
+        wishlist_item = cursor.fetchone()
+
+        if wishlist_item:
+            # Remove from wishlist
+            cursor.execute(
+                "DELETE FROM wishlist WHERE user_id = %s AND diamond_id = %s",
+                (user_id, diamond_id),
+            )
+            conn.commit()
+            return (
+                jsonify(
+                    {
+                        "success": True,
+                        "is_wishlisted": False,
+                        "message": "Diamond removed from wishlist",
+                    }
+                ),
+                200,
+            )
+        else:
+            # Add to wishlist
+            cursor.execute(
+                "INSERT INTO wishlist (user_id, diamond_id, added_at) VALUES (%s, %s, %s)",
+                (user_id, diamond_id, datetime.now()),
+            )
+            if cursor.rowcount == 0:
+                logging.warning("Insert failed: No rows affected")
+
+            conn.commit()
+            return (
+                jsonify(
+                    {
+                        "success": True,
+                        "is_wishlisted": True,
+                        "message": "Diamond added to wishlist",
+                    }
+                ),
+                200,
+            )
+
+    except Error as e:
+        logging.error(f"Database error in toggle_wishlist: {e.errno}, {e.msg}")
+        if conn:
+            conn.rollback()
+        return jsonify({"success": False, "message": f"Database error: {str(e)}"}), 500
+    except Exception as e:
+        logging.error(f"Unexpected error in toggle_wishlist: {e}")
+        if conn:
+            conn.rollback()
+        return (
+            jsonify({"success": False, "message": f"Unexpected error: {str(e)}"}),
+            500,
+        )
+    finally:
+        # This always runs, regardless of success or exception
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
 
 
 @app.route("/franchise")
