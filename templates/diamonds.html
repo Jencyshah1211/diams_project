@@ -27,7 +27,7 @@
     <div class="diamond-filters">
       <!-- NATURAL Form -->
       <div id="formNatural" class="filter-form">
-        <form method="GET" action="/diamonds/filter" class="filter-container">
+        <form method="POST" action="/diamonds/filter" class="filter-container">
           <input
             type="hidden"
             name="diamond_type"
@@ -223,7 +223,7 @@
 
       <!-- LAB GROWN Form -->
       <div id="formLab" class="filter-form hidden">
-        <form method="GET" action="/diamonds/filter" class="filter-container">
+        <form method="POST" action="/diamonds/filter" class="filter-container">
           <input
             type="hidden"
             name="diamond_type"
@@ -421,9 +421,15 @@
         diamond.diamond_type }}
       </p>
       <p><strong>₹{{ diamond.amount }}</strong></p>
-      <a href="/diamond/{{ diamond.id }}" class="view-details-btn"
-        >View Details</a
-      >
+      <div class="actions">
+        <a href="/diamond/{{ diamond.diamond_id }}" class="view-details-btn"
+          >View Details</a
+        >
+        <i
+          class="{% if user_type == 'buyer' and wishlist_diamond_ids and diamond.diamond_id|string in wishlist_diamond_ids %}fa-solid fa-heart active{% else %}fa-regular fa-heart{% endif %} wishlist-icon"
+          data-diamond-id="{{ diamond.diamond_id }}"
+        ></i>
+      </div>
     </div>
     {% endfor %} {% else %}
     <p>No diamonds found.</p>
@@ -477,6 +483,8 @@
         button.classList.add("active");
         console.log(`Activated button for ${inputId} with value ${value}`);
       }
+
+      // Handle color type/grade mutual exclusivity
       if (inputId.includes("colorType")) {
         const gradeInput = document.getElementById(
           inputId.replace("Type", "Grade")
@@ -559,6 +567,7 @@
     diamondCards.forEach((card) => diamondGrid.appendChild(card));
   }
 
+  // Setup carat slider synchronization
   function setupCaratSlider(minSliderId, maxSliderId, minInputId, maxInputId) {
     const minSlider = document.getElementById(minSliderId);
     const maxSlider = document.getElementById(maxSliderId);
@@ -586,23 +595,74 @@
     });
   }
 
-  // Function to update the diamond grid with search results
-  function updateDiamondGrid(diamonds) {
+  // Enhanced setupWishlistIcons function to prevent duplicate listeners
+  function setupWishlistIcons() {
+    let isProcessing = false;
+
+    // Remove any existing event listeners first by cloning nodes
+    document.querySelectorAll(".wishlist-icon").forEach((icon) => {
+      const newIcon = icon.cloneNode(true);
+      icon.parentNode.replaceChild(newIcon, icon);
+    });
+
+    // Add fresh event listeners to prevent duplicates
+    document.querySelectorAll(".wishlist-icon").forEach((icon) => {
+      icon.addEventListener("click", async function () {
+        if (isProcessing) return;
+        isProcessing = true;
+
+        const userType = "{{ user_type }}";
+        if (userType === "guest") {
+          alert("Please log in to manage your wishlist.");
+          isProcessing = false;
+          return;
+        }
+
+        const diamondId = this.getAttribute("data-diamond-id");
+        const isWishlisted = this.classList.contains("active");
+
+        try {
+          const response = await fetch("/wishlist/toggle", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: `diamond_id=${encodeURIComponent(diamondId)}`,
+          });
+
+          const data = await response.json();
+          if (data.success) {
+            this.classList.toggle("fa-regular", !data.is_wishlisted);
+            this.classList.toggle("fa-solid", data.is_wishlisted);
+            this.classList.toggle("active", data.is_wishlisted);
+          } else {
+            alert(data.message);
+          }
+        } catch (err) {
+          console.error("Wishlist update failed:", err);
+          alert("Failed to update wishlist. Please try again.");
+        } finally {
+          isProcessing = false;
+        }
+      });
+    });
+  }
+
+  // Update diamond grid to include wishlist state
+  function updateDiamondGrid(diamonds, wishlist_diamond_ids) {
     const diamondGrid = document.querySelector(".diamond-grid");
     const sortBy = document.getElementById("sortBy").value;
+    const userType = "{{ user_type }}";
 
-    // Clear existing content
     diamondGrid.innerHTML = "<h2>Diamond Collection</h2>";
 
     if (diamonds && diamonds.length > 0) {
-      // Sort diamonds based on current sort option
       diamonds.sort((a, b) => {
         return sortBy === "amount_asc"
           ? a.amount - b.amount
           : b.amount - a.amount;
       });
 
-      // Append diamond cards
       diamonds.forEach((diamond) => {
         const card = document.createElement("div");
         card.className = "card";
@@ -610,13 +670,29 @@
         <img src="${diamond.image_url}" alt="${diamond.shape} diamond" />
         <h3>${diamond.shape} Diamond</h3>
         <p>
-          Carat: ${diamond.carat} | Color: ${diamond.color} | Clarity: ${diamond.clarity} | Cut: ${diamond.cut} | Type: ${diamond.diamond_type}
+          Carat: ${diamond.carat} | Color: ${diamond.color} | Clarity: ${
+          diamond.clarity
+        } | Cut: ${diamond.cut} | Type: ${diamond.diamond_type}
         </p>
         <p><strong>₹${diamond.amount}</strong></p>
-        <a href="/diamond/${diamond.id}" class="view-details-btn">View Details</a>
+        <div class="actions">
+            <a href="/diamond/${
+              diamond.diamond_id
+            }" class="view-details-btn">View Details</a>
+            <i class="${
+              userType === "buyer" &&
+              wishlist_diamond_ids &&
+              wishlist_diamond_ids.includes(String(diamond.diamond_id))
+                ? "fa-solid fa-heart active"
+                : "fa-regular fa-heart"
+            } wishlist-icon" data-diamond-id="${diamond.diamond_id}"></i>
+          </div>
       `;
         diamondGrid.appendChild(card);
       });
+
+      // Re-setup wishlist icons after updating the grid
+      setupWishlistIcons();
     } else {
       diamondGrid.innerHTML += "<p>No diamonds found.</p>";
     }
@@ -625,15 +701,20 @@
   // Function to display loading state
   function showLoading(show) {
     const loading = document.getElementById("loading");
-    loading.classList.toggle("hidden", !show);
+    if (loading) {
+      loading.classList.toggle("hidden", !show);
+    }
   }
 
   // Function to display error message
   function showError(message) {
     const error = document.getElementById("error");
-    error.textContent = message || "An error occurred while fetching diamonds.";
-    error.classList.remove("hidden");
-    setTimeout(() => error.classList.add("hidden"), 5000);
+    if (error) {
+      error.textContent =
+        message || "An error occurred while fetching diamonds.";
+      error.classList.remove("hidden");
+      setTimeout(() => error.classList.add("hidden"), 5000);
+    }
   }
 
   // Initialize and sync button states with hidden inputs
@@ -674,7 +755,11 @@
           }
 
           const result = await response.json();
-          updateDiamondGrid(result.diamonds);
+          updateDiamondGrid(result.diamonds, result.wishlist_diamond_ids || []);
+
+          if (result.message) {
+            showError(result.message);
+          }
         } catch (error) {
           console.error("Error fetching diamonds:", error);
           showError("Failed to load diamonds. Please try again.");
@@ -682,20 +767,24 @@
           showLoading(false);
         }
       });
-
-      setupCaratSlider(
-        "caratSliderMinNatural",
-        "caratSliderMaxNatural",
-        "caratMinNatural",
-        "caratMaxNatural"
-      );
-      setupCaratSlider(
-        "caratSliderMinLab",
-        "caratSliderMaxLab",
-        "caratMinLab",
-        "caratMaxLab"
-      );
     });
+
+    // Setup carat sliders - only call once for each form
+    setupCaratSlider(
+      "caratSliderMinNatural",
+      "caratSliderMaxNatural",
+      "caratMinNatural",
+      "caratMaxNatural"
+    );
+    setupCaratSlider(
+      "caratSliderMinLab",
+      "caratSliderMaxLab",
+      "caratMinLab",
+      "caratMaxLab"
+    );
+
+    // Setup wishlist icons initially - only call once
+    setupWishlistIcons();
 
     // Sync button states with hidden inputs on load
     document.querySelectorAll(".filter-form").forEach((form) => {
