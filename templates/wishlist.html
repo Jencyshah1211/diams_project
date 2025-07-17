@@ -1,147 +1,45 @@
 {% extends "base.html" %} {% block content %}
-<section class="page py-8 px-4 max-w-7xl mx-auto">
-  <h2 class="text-3xl font-bold text-center mb-6">Your Wishlist</h2>
+<section class="page">
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+  />
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
 
-  <!-- Flash Messages -->
-  {% with messages = get_flashed_messages(with_categories=true) %} {% if
-  messages %}
-  <div class="mb-6 max-w-3xl mx-auto">
-    {% for category, message in messages %}
-    <div
-      class="p-4 rounded-lg text-white {% if category == 'success' %}bg-green-600{% elif category == 'error' %}bg-red-600{% else %}bg-blue-600{% endif %}"
-    >
-      {{ message }}
+  <h2>Your Wishlist</h2>
+  {% if user_type == 'guest' %}
+  <p>Please log in to view your wishlist.</p>
+  <a href="/login" class="search-btn">Log In</a>
+  {% elif user_type != 'buyer' %}
+  <p>Wishlist is available only for buyers.</p>
+  {% elif items %}
+  <div class="diamond-grid">
+    {% for diamond in items %}
+    <div class="card">
+      <img src="{{ diamond.image_url }}" alt="{{ diamond.shape }} diamond" />
+      <h3>{{ diamond.shape }} Diamond</h3>
+      <p>
+        Carat: {{ diamond.carat }} | Color: {{ diamond.color }} | Clarity: {{
+        diamond.clarity }} | Cut: {{ diamond.cut }} | Type: {{
+        diamond.diamond_type }}
+      </p>
+      <p><strong>₹{{ diamond.amount }}</strong></p>
+      <div class="actions">
+        <a href="/diamond/{{ diamond.diamond_id }}" class="view-details-btn"
+          >View Details</a
+        >
+        <i
+          class="fa-solid fa-heart wishlist-icon active"
+          data-diamond-id="{{ diamond.diamond_id }}"
+        ></i>
+      </div>
     </div>
     {% endfor %}
   </div>
-  {% endif %} {% endwith %}
-
-  <div class="cart-layout">
-    <div class="cart-items grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-      {% if items %} {% for item in items %}
-      <div
-        class="cart-item bg-white shadow-lg rounded-lg p-4 flex flex-col relative"
-        aria-labelledby="item-{{ item.id|default(loop.index) }}-title"
-      >
-        <img
-          src="{{ item.image_url|default('https://images.unsplash.com/photo-1600267185393-e158a98703de?auto=format&fit=crop&q=80') }}"
-          alt="{{ item.name|default('Item') }}"
-          class="w-full h-48 object-cover rounded-md mb-4"
-        />
-        <div class="item-details flex-1">
-          <h3
-            id="item-{{ item.id|default(loop.index) }}-title"
-            class="text-lg font-semibold"
-          >
-            {{ item.name|default('Item Name') }}
-          </h3>
-          <p class="text-gray-600">
-            {{ item.description|default('No description
-            available')|truncate(100) }}
-          </p>
-          <p class="price text-xl font-bold mt-2">
-            ${{ item.price|default('0.00') }}
-          </p>
-        </div>
-        <div class="item-actions mt-4 flex gap-2">
-          <button
-            class="btn bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-            onclick="moveToCart('{{ item.id|default(loop.index) }}')"
-            aria-label="Move {{ item.name|default('Item') }} to cart"
-          >
-            Move to Cart
-          </button>
-          <button
-            class="btn bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
-            onclick="removeFromWishlist('{{ item.id|default(loop.index) }}')"
-            aria-label="Remove {{ item.name|default('Item') }} from wishlist"
-          >
-            Remove
-          </button>
-        </div>
-      </div>
-      {% endfor %} {% else %}
-      <div class="empty-message text-center py-12">
-        <p class="text-xl text-gray-700">No items in your wishlist.</p>
-        {% if user_type == 'guest' %}
-        <p class="text-gray-600 mt-2">Sign in to add items to your wishlist!</p>
-        <div class="mt-4 flex gap-4 justify-center">
-          <a
-            href="{{ url_for('login') }}"
-            class="btn bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
-            >Login</a
-          >
-          <a
-            href="{{ url_for('signup', user_type='guest') }}"
-            class="btn bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700"
-            >Sign Up</a
-          >
-        </div>
-        {% else %}
-        <p class="text-gray-600 mt-2">
-          Browse our collection to add items to your wishlist.
-        </p>
-        <a
-          href="{{ url_for('diamonds') }}"
-          class="btn bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 mt-4"
-          >Browse Diamonds</a
-        >
-        {% endif %}
-      </div>
-      {% endif %}
-    </div>
-  </div>
-
-  <!-- JavaScript for dynamic actions -->
-  <script>
-    async function moveToCart(itemId) {
-      if (confirm("Move this item to your cart?")) {
-        try {
-          const response = await fetch("/api/cart/add", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ item_id: itemId }),
-          });
-          if (response.ok) {
-            alert("Item moved to cart!");
-            removeFromWishlist(itemId); // Optionally remove from wishlist after moving
-          } else {
-            alert("Failed to move item to cart.");
-          }
-        } catch (error) {
-          alert("An error occurred. Please try again.");
-        }
-      }
-    }
-
-    async function removeFromWishlist(itemId) {
-      if (confirm("Remove this item from your wishlist?")) {
-        try {
-          const response = await fetch("/api/wishlist/remove", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ item_id: itemId }),
-          });
-          if (response.ok) {
-            document
-              .querySelector(`[aria-labelledby="item-${itemId}-title"]`)
-              .remove();
-            if (!document.querySelector(".cart-item")) {
-              document.querySelector(".cart-items").innerHTML = `
-                <div class="empty-message text-center py-12">
-                  <p class="text-xl text-gray-700">No items in your wishlist.</p>
-                  <p class="text-gray-600 mt-2">Browse our collection to add items to your wishlist.</p>
-                  <a href="/diamonds" class="btn bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 mt-4">Browse Diamonds</a>
-                </div>`;
-            }
-          } else {
-            alert("Failed to remove item from wishlist.");
-          }
-        } catch (error) {
-          alert("An error occurred. Please try again.");
-        }
-      }
-    }
-  </script>
+  {% else %}
+  <p>Your wishlist is empty.</p>
+  {% endif %}
 </section>
+
+<script src="{{ url_for('static', filename='js/wishlist.js') }}"></script>
 {% endblock %}
