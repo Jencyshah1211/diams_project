@@ -3,6 +3,15 @@
 <section class="supplier-hub">
   <h1>Supplier Hub</h1>
   <h2>Hi, {{ session['name'] }}!</h2>
+  <p style="text-align: center; margin-top: 10px">
+    📄 Need a template?
+    <a
+      href="{{ url_for('static', filename='sample_inventory.xlsx') }}"
+      download
+    >
+      Download Sample Format
+    </a>
+  </p>
   <div class="upload-section">
     <h3>Upload Diamond Inventory (Excel)</h3>
     <form
@@ -27,7 +36,7 @@
   <table id="inventory-table">
     <thead>
       <tr>
-        <th>Stock Number</th>
+        <th>Diams ID</th>
         <th>Diamond Type</th>
         <th>Shape</th>
         <th>Carat</th>
@@ -37,7 +46,7 @@
         <th>Polish</th>
         <th>Symmetry</th>
         <th>Fluorescence</th>
-        <th>Image</th>
+        <th>INR Price</th>
       </tr>
     </thead>
     <tbody id="inventory-table-body">
@@ -77,13 +86,7 @@
         .map((item) => {
           const carat =
             item.carat != null ? Number(item.carat).toFixed(2) : "0.00";
-          const imageUrl =
-            item.image_url &&
-            item.image_url !== "nan" &&
-            item.image_url !== "click here" &&
-            item.image_url.startsWith(("http://", "https://", "."))
-              ? item.image_url
-              : "";
+
           const cut = item.cut === "nan" ? "" : item.cut || "-";
           const polish = item.polish === "nan" ? "" : item.polish || "-";
           const symmetry = item.symmetry === "nan" ? "" : item.symmetry || "-";
@@ -92,7 +95,7 @@
 
           return `
           <tr>
-            <td>${item.stock_number || "-"}</td>
+            <td>${item.diams_id || "-"}</td>
             <td>${item.diamond_type || "-"}</td>
             <td>${item.shape || "-"}</td>
             <td>${carat}</td>
@@ -102,11 +105,7 @@
             <td>${polish}</td>
             <td>${symmetry}</td>
             <td>${fluorescence}</td>
-            <td>${
-              imageUrl
-                ? `<a href="${imageUrl}" target="_blank">View Image</a>`
-                : "-"
-            }</td>
+            <td>${item.inr_value || "-"}</td>
           </tr>
         `;
         })
