@@ -19,7 +19,20 @@
 </section>
 
 <section class="features">
-  {% if session['user'] %}
+  {% if session['user_type'] == 'supplier' %}
+  <h2 class="greeting">Hi, {{ session['name'] }}!</h2>
+  <section class="supplier-summary">
+    <div class="supplier-box">
+      <h3>💎 Total Diamonds</h3>
+      <span id="total-diamonds">0</span>
+    </div>
+    <div class="supplier-box">
+      <h3>💰 Total INR Value</h3>
+      ₹ <span id="total-price">0</span>
+    </div>
+  </section>
+
+  {% else %} {% if session['user'] %}
   <h2 class="greeting">Hi, {{ session['name'] }}!</h2>
   {% endif %}
   <h2 style="text-align: center">Why Choose Diams?</h2>
@@ -45,7 +58,9 @@
       <p>Insured delivery worldwide.</p>
     </div>
   </div>
+  {% endif %}
 </section>
+
 <section class="collections">
   <h2 style="text-align: center">Featured Collections</h2>
   <div class="grid collections-grid">
@@ -73,4 +88,30 @@
     </div>
   </div>
 </section>
+<script>
+  document.addEventListener("DOMContentLoaded", async () => {
+    try {
+      const response = await fetch("/api/supplier/inventory");
+      const data = await response.json();
+      if (Array.isArray(data)) {
+        const totalDiamonds = data.length;
+        const totalPrice = data.reduce((sum, item) => {
+          const price = parseFloat(item.inr_value) || 0;
+          return sum + price;
+        }, 0);
+
+        document.getElementById("total-diamonds").innerText = totalDiamonds;
+        document.getElementById("total-price").innerText =
+          totalPrice.toLocaleString("en-IN");
+      } else {
+        document.getElementById("total-diamonds").innerText = "0";
+        document.getElementById("total-price").innerText = "0";
+      }
+    } catch (err) {
+      console.error("Error fetching inventory summary:", err);
+      document.getElementById("total-diamonds").innerText = "Error";
+      document.getElementById("total-price").innerText = "Error";
+    }
+  });
+</script>
 {% endblock %}
