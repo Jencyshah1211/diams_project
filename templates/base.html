@@ -56,6 +56,8 @@
       </div>
       <!-- Bottom row: main nav links -->
       <div class="navbar-bottom">
+        {% if session['user_type'] == 'buyer' or session['user_type'] ==
+        'jeweller'%}
         <div class="dropdown">
           <a
             href="/diamonds"
@@ -84,18 +86,19 @@
             <a href="/diamonds/filter=create-demand">Bangles</a>
           </div>
         </div>
-        <a
-          href="/education"
-          class="{% if request.path == '/education' %}active{% endif %}"
-          >DIAMOND EDUCATION</a
-        >
-        {% if session['user_type'] == 'supplier' %}
+        {% endif %} {% if session['user_type'] == 'supplier' %}
         <a
           href="/supplier_hub"
           class="{% if request.path == '/supplier_hub' %}active{% endif %}"
           >SUPPLIER HUB</a
         >
         {% endif %}
+        <a
+          href="/education"
+          class="{% if request.path == '/education' %}active{% endif %}"
+          >DIAMOND EDUCATION</a
+        >
+
         <a
           href="/franchise"
           class="{% if request.path == '/franchise' %}active{% endif %}"
