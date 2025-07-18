@@ -94,7 +94,7 @@ def diamonds():
         conn = mysql.connector.connect(**mysql_config)
         cursor = conn.cursor(dictionary=True)
         cursor.execute(
-            "SELECT diamond_id, diamond_type, shape, carat, color, clarity, cut, amount, image_url FROM diamonds WHERE stock_status = 'in_stock' ORDER BY amount ASC"
+            "SELECT diamond_id, diamond_type, shape, carat, color, clarity, cut, inr_value, image_url FROM diamonds WHERE stock_status = 'in_stock' ORDER BY inr_value ASC"
         )
         diamonds = cursor.fetchall()
         wishlist_diamond_ids = []
@@ -138,8 +138,8 @@ def filter_diamonds():
         print("Filter form data:", data)
 
         query = """
-            SELECT diamond_id, diamond_type, shape, carat, color, clarity, cut, amount, image_url,
-                   is_certified, fluorescence
+            SELECT diamond_id, diamond_type, shape, carat, color, clarity, cut, inr_value, image_url,
+            is_certified, fluorescence
             FROM diamonds
             WHERE stock_status = 'in_stock'
         """
@@ -243,9 +243,9 @@ def filter_diamonds():
         # Add sorting (default: lowest price first)
         sort_by = data.get("sort_by", "amount_asc")
         if sort_by == "price_desc":
-            query += " ORDER BY amount DESC"
+            query += " ORDER BY inr_value DESC"
         else:
-            query += " ORDER BY amount ASC"
+            query += " ORDER BY inr_value ASC"
 
         print("Final SQL Query:", query)
         print("With Params:", params)
@@ -320,7 +320,7 @@ def wishlist():
             cursor.execute(
                 """
                 SELECT DISTINCT d.diamond_id, d.diamond_type, d.shape, d.carat, d.color, d.clarity,
-                       d.cut, d.amount, d.image_url
+                       d.cut, d.inr_value, d.image_url
                 FROM diamonds d
                 JOIN wishlist w ON d.diamond_id = w.diamond_id
                 WHERE w.user_id = %s
@@ -1225,8 +1225,8 @@ def get_supplier_inventory():
         # Step 3: Fetch inventory for the supplier_id with specified columns
         cursor.execute(
             """
-            SELECT stock_number, diamond_type, shape, carat, color, clarity, cut, 
-                   polish, symmetry, fluorescence, image_url
+            SELECT diams_id, diamond_type, shape, carat, color, clarity, cut, 
+                   polish, symmetry, fluorescence, inr_value
             FROM diamonds 
             WHERE supplier_id = %s
             """,
