@@ -1,4 +1,5 @@
-{% extends "base.html" %} {% block content %}
+{% extends "base.html" %} {% block content %} {% if session['user_type'] !=
+'supplier' %}
 <section class="hero">
   <h1>Discover Exceptional Diamonds</h1>
   <p>Explore our curated collection of natural and lab-grown diamonds.</p>
@@ -10,17 +11,38 @@
   <a class="btn" href="/diamonds/filter?type=wholesale"
     >Browse Wholesale Diamonds</a
   >
-  {% elif session['user_type'] == 'supplier' %}
-  <a class="btn" href="/supplier_hub">Manage Inventory</a>
+
   {% endif %} {% else %}
   <a class="btn" href="/diamonds">Browse Collection</a>
   <a class="btn" href="/login">Login to Explore More</a>
   {% endif %}
 </section>
+{% endif %}
 
 <section class="features">
   {% if session['user_type'] == 'supplier' %}
-  <h2 class="greeting">Hi, {{ session['name'] }}!</h2>
+  <div class="supplier-header">
+    <div class="left-section">
+      <div id="menu-toggle" class="hamburger">
+        <span id="menu-icon">&#9776;</span>
+        <span class="menu-label">Menu</span>
+      </div>
+    </div>
+    <div class="center-section">
+      <h2 class="greeting">Hi, {{ session['name'] }}!</h2>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <nav id="sidebar-menu" class="sidebar hidden">
+    <ul>
+      <li><a href="/supplier/new-inventory">New Inventory</a></li>
+      <li><a href="/supplier/edit-inventory">Edit Inventory</a></li>
+      <li><a href="/supplier/api">My API</a></li>
+      <li><a href="/supplier/logs">My Logs</a></li>
+    </ul>
+  </nav>
+
   <section class="supplier-summary">
     <div class="supplier-box">
       <h3>💎 Total Diamonds</h3>
@@ -90,6 +112,26 @@
 </section>
 <script>
   document.addEventListener("DOMContentLoaded", async () => {
+    const menuToggle = document.getElementById("menu-toggle");
+    const sidebar = document.getElementById("sidebar-menu");
+    const icon = document.getElementById("menu-icon");
+    const label = document.querySelector(".menu-label");
+
+    menuToggle.addEventListener("click", () => {
+      const isHidden = sidebar.classList.contains("hidden");
+
+      // Toggle visibility
+      sidebar.classList.toggle("hidden");
+
+      // Change icon & label
+      if (isHidden) {
+        icon.innerHTML = "&#10006;"; // ✖
+        label.textContent = "Close";
+      } else {
+        icon.innerHTML = "&#9776;"; // ☰
+        label.textContent = "Menu";
+      }
+    });
     try {
       const response = await fetch("/api/supplier/inventory");
       const data = await response.json();
