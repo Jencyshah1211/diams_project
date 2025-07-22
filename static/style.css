@@ -265,7 +265,50 @@ body {
     font-size: 14px;
     color: #6b7280;
   }
-  
+  .supplier-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    padding: 10px 0;
+  }
+
+  .left-section {
+    position: absolute;
+    left: 0;
+  }
+
+  .center-section {
+    margin: 0 auto;
+    text-align: center;
+    width: 100%;
+  }
+
+  .hamburger {
+    font-size: 24px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding-left: 10px;
+  }
+
+  .menu-label {
+    font-size: 16px;
+    font-weight: 500;
+  }
+  .sidebar {
+    background-color: #f8f9fa;
+    border: 1px solid #ddd;
+    padding: 15px;
+    margin-top: 10px;
+    width: fit-content;
+    transition: all 0.3s ease;
+  }
+
+  .sidebar.hidden {
+    display: none;
+  }
 /* Diamond Page */
 
 .diamond-grid,
