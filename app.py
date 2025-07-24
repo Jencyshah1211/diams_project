@@ -19,6 +19,11 @@ from mysql.connector import Error
 import logging
 import pandas as pd
 import uuid
+import secrets
+from datetime import datetime, timedelta
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 
 app = Flask(__name__)
@@ -278,6 +283,58 @@ def filter_diamonds():
         return jsonify({"error": f"MySQL error: {str(e)}"}), 500
     except Exception as e:
         return jsonify({"error": f"Server error: {str(e)}"}), 500
+
+
+@app.route("/view_details/<item_type>/<item_id>", methods=["GET"])
+def view_details(item_type, item_id):
+    if item_type != "diamond":
+        flash("Invalid item type", "error")
+        return redirect(url_for("home"))
+
+    try:
+        conn = mysql.connector.connect(**mysql_config)
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute(
+            """
+            SELECT diamond_id, diamond_type, shape, carat, color, clarity, cut, polish, symmetry, 
+                   fluorescence, inr_value, image_url, video_url, is_certified, 
+                   certificate_issuer, certificate_number, stock_number
+            FROM diamonds 
+            WHERE diamond_id = %s AND stock_status = 'in_stock'
+            """,
+            (item_id,),
+        )
+        diamond = cursor.fetchone()
+
+        if not diamond:
+            flash("Diamond not found", "error")
+            cursor.close()
+            conn.close()
+            return redirect(url_for("home"))
+
+        is_wishlisted = False
+        user_id = session.get("user_id")
+        user_type = session.get("user_type", "guest")
+        if user_type == "buyer" and user_id:
+            cursor.execute(
+                "SELECT id FROM wishlist WHERE user_id = %s AND diamond_id = %s",
+                (user_id, diamond["diamond_id"]),
+            )
+            is_wishlisted = bool(cursor.fetchone())
+
+        cursor.close()
+        conn.close()
+        return render_template(
+            "view_details.html",
+            item=diamond,
+            item_type=item_type,
+            is_wishlisted=is_wishlisted,
+            user_type=user_type,
+        )
+    except Error as e:
+        logging.error(f"Error fetching diamond details: {e}")
+        flash("An error occurred while fetching diamond details", "error")
+        return redirect(url_for("home"))
 
 
 @app.route("/jewelry")
@@ -1017,6 +1074,123 @@ def signup(user_type):
             if conn:
                 conn.close()
     return render_template("signup.html", user_type=selected_user_type)
+
+
+@app.route("/forgot_password", methods=["GET", "POST"])
+def forgot_password():
+    if request.method == "POST":
+        email = request.form.get("email")
+        if not email:
+            flash("Please provide an email address", "error")
+            return render_template("forgot_password.html")
+
+        try:
+            conn = mysql.connector.connect(**mysql_config)
+            cursor = conn.cursor(dictionary=True)
+            cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
+            user = cursor.fetchone()
+
+            if not user:
+                flash("No account found with this email", "error")
+                cursor.close()
+                conn.close()
+                return render_template("forgot_password.html")
+
+            # Generate a reset token
+            token = secrets.token_hex(16)
+            expiry = datetime.now() + timedelta(hours=1)  # Token expires in 1 hour
+
+            # Store token in the database
+            cursor.execute(
+                "UPDATE users SET reset_token = %s, token_expiry = %s WHERE email = %s",
+                (token, expiry, email),
+            )
+            conn.commit()
+
+            # Send reset email
+            reset_link = url_for("reset_password", token=token, _external=True)
+            msg = MIMEMultipart()
+            msg["From"] = "no-reply@yourwebsite.com"
+            msg["To"] = email
+            msg["Subject"] = "Password Reset Request"
+            body = f"Click the following link to reset your password: <a href='{reset_link}'>Reset Password</a><br>This link will expire in 1 hour."
+            msg.attach(MIMEText(body, "html"))
+
+            try:
+                with smtplib.SMTP("smtp.gmail.com", 587) as server:
+                    server.starttls()
+                    server.login(
+                        os.getenv("EMAIL_ADDRESS"), os.getenv("EMAIL_PASSWORD")
+                    )
+                    server.sendmail("no-reply@yourwebsite.com", email, msg.as_string())
+                flash("A password reset link has been sent to your email", "success")
+            except Exception as e:
+                logging.error(f"Error sending email: {e}")
+                flash("Failed to send reset email. Please try again later.", "error")
+
+            cursor.close()
+            conn.close()
+            return render_template("forgot_password.html")
+        except Exception as e:
+            logging.error(f"Error during forgot password: {e}")
+            flash("An error occurred. Please try again.", "error")
+            return render_template("forgot_password.html")
+
+    return render_template("forgot_password.html")
+
+
+@app.route("/reset_password/<token>", methods=["GET", "POST"])
+def reset_password(token):
+    try:
+        conn = mysql.connector.connect(**mysql_config)
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute(
+            "SELECT * FROM users WHERE reset_token = %s AND token_expiry > %s",
+            (token, datetime.now()),
+        )
+        user = cursor.fetchone()
+
+        if not user:
+            flash("Invalid or expired reset link", "error")
+            cursor.close()
+            conn.close()
+            return redirect(url_for("forgot_password"))
+
+        if request.method == "POST":
+            password = request.form.get("password")
+            confirm_password = request.form.get("confirm_password")
+
+            if not password or not confirm_password:
+                flash("Please provide both password fields", "error")
+                cursor.close()
+                conn.close()
+                return render_template("reset_password.html", token=token)
+
+            if password != confirm_password:
+                flash("Passwords do not match", "error")
+                cursor.close()
+                conn.close()
+                return render_template("reset_password.html", token=token)
+
+            # Update password
+            password_hash = generate_password_hash(password)
+            cursor.execute(
+                "UPDATE users SET password_hash = %s, reset_token = NULL, token_expiry = NULL WHERE reset_token = %s",
+                (password_hash, token),
+            )
+            conn.commit()
+            flash("Password reset successfully. Please login.", "success")
+            cursor.close()
+            conn.close()
+            return redirect(url_for("login"))
+
+        cursor.close()
+        conn.close()
+        return render_template("reset_password.html", token=token)
+    except Exception as e:
+        logging.error(f"Error during reset password: {e}")
+        flash("An error occurred. Please try again.", "error")
+        return redirect(url_for("forgot_password"))
 
 
 @app.route("/logout")
