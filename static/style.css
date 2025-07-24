@@ -962,6 +962,77 @@ body {
   box-shadow: 0 4px 12px rgba(75, 108, 183, 0.4);
 }
 
+
+/* View details page*/
+.details-container {
+    max-width: 1100px;
+    margin: 40px auto;
+    padding: 30px;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+    border-radius: 16px;
+    transition: all 0.3s ease;
+}
+
+/* Header */
+.details-container h2 {
+    font-size: 2.2rem;
+    margin-bottom: 30px;
+    text-align: center;
+    color: #1a1a1a;
+    letter-spacing: 1px;
+}
+
+/* Flex layout */
+.item-details {
+    display: flex;
+    gap: 40px;
+    flex-wrap: wrap;
+    align-items: flex-start;
+}
+
+/* Image & Video */
+.item-image img,
+.item-image video {
+    width: 400px;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: 14px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin-right: 20px;
+}
+
+
+/* Item Info */
+.item-info h3 {
+    font-size: 1.8rem;
+    margin-bottom: 16px;
+    color: #333;
+}
+
+.item-info p {
+    margin: 10px 0;
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #444;
+}
+/* Actions: wishlist */
+.actions {
+    margin-bottom: 25px;
+}
+
+
+.button-group {
+    margin-top: 40px;
+    text-align: center;
+}
+
+.button-group .btn-primary {
+    margin: 10px;
+}
+
+
   /* Cart & Summary */
   .cart-container {
     display: flex;
