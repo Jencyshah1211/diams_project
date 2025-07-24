@@ -11,6 +11,10 @@ CREATE TABLE users (
     created_at DATETIME
 );
 
+ALTER TABLE users
+ADD reset_token VARCHAR(255),
+ADD token_expiry DATETIME;
+
 -- Creating the buyers table
 CREATE TABLE buyers (
     id INT AUTO_INCREMENT PRIMARY KEY,
