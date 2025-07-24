@@ -1,0 +1,112 @@
+{% extends "base.html" %} {% block content %}
+<section class="page">
+  <div class="details-container">
+    <h2>Diamond Details</h2>
+    <div class="item-details">
+      <div class="item-image">
+        <img src="{{ item.image_url }}" alt="{{ item.shape }} Diamond" />
+        {% if item.video_url %}
+        <video controls width="400">
+          <source src="{{ item.video_url }}" type="video/mp4" />
+          Your browser does not support the video tag.
+        </video>
+        {% endif %}
+      </div>
+      <div class="item-info">
+        <h3>{{ item.shape|title }} Diamond</h3>
+        <p><strong>Carat:</strong> {{ item.carat }}</p>
+        <p><strong>Color:</strong> {{ item.color }}</p>
+        <p><strong>Clarity:</strong> {{ item.clarity }}</p>
+        <p><strong>Cut:</strong> {{ item.cut }}</p>
+        <p><strong>Polish:</strong> {{ item.polish }}</p>
+        <p><strong>Symmetry:</strong> {{ item.symmetry }}</p>
+        <p><strong>Fluorescence:</strong> {{ item.fluorescence }}</p>
+        <p><strong>Type:</strong> {{ item.diamond_type|title }}</p>
+        <p>
+          <strong>Certified:</strong> {{ 'Yes' if item.is_certified else 'No' }}
+        </p>
+        {% if item.certificate_issuer %}
+        <p>
+          <strong>Certificate Issuer:</strong> {{ item.certificate_issuer }}
+        </p>
+        {% endif %} {% if item.certificate_number %}
+        <p>
+          <strong>Certificate Number:</strong> {{ item.certificate_number }}
+        </p>
+        {% endif %} {% if item.stock_number %}
+        <p><strong>Stock No:</strong> {{ item.stock_number }}</p>
+        {% endif %}
+        <p><strong>Price:</strong> ₹{{ item.inr_value }}</p>
+      </div>
+    </div>
+    <div class="button-group">
+      {% if user_type == "buyer" %}
+      <div class="actions">
+        <i
+          class="{% if is_wishlisted %}fa-solid fa-heart active{% else %}fa-regular fa-heart{% endif %} wishlist-icon"
+          data-diamond-id="{{ item.diamond_id }}"
+        ></i>
+      </div>
+      {% endif %}
+      <a href="{{ url_for('cart') }}" class="btn-primary"
+        ><i class="fa-solid fa-cart-plus"></i> Add to Cart</a
+      >
+      <a href="{{ url_for('diamonds') }}" class="btn-primary"
+        ><i class="fa fa-gem"></i> Diamonds</a
+      >
+      {% if user_type == "buyer" %}
+      <a href="{{ url_for('wishlist') }}" class="btn-primary"
+        ><i class="fa fa-heart"></i> Wishlist</a
+      >
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    let isProcessing = false;
+
+    const wishlistIcon = document.querySelector(".wishlist-icon");
+    if (wishlistIcon) {
+      wishlistIcon.addEventListener("click", async function () {
+        if (isProcessing) return;
+        isProcessing = true;
+
+        const userType = "{{ user_type }}";
+        if (userType !== "buyer") {
+          alert("Please log in as a buyer to manage your wishlist.");
+          isProcessing = false;
+          return;
+        }
+
+        const diamondId = this.getAttribute("data-diamond-id");
+
+        try {
+          const response = await fetch("/wishlist/toggle", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: `diamond_id=${encodeURIComponent(diamondId)}`,
+          });
+
+          const data = await response.json();
+          if (data.success) {
+            this.classList.toggle("fa-regular", !data.is_wishlisted);
+            this.classList.toggle("fa-solid", data.is_wishlisted);
+            this.classList.toggle("active", data.is_wishlisted);
+          } else {
+            alert(data.message);
+          }
+        } catch (err) {
+          console.error("Wishlist update failed:", err);
+          alert("Failed to update wishlist. Please try again.");
+        } finally {
+          isProcessing = false;
+        }
+      });
+    }
+  });
+</script>
+{% endblock %}
