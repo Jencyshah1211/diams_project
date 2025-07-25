@@ -1,83 +1,177 @@
-{% extends "base.html" %}
-{% block content %}
+{% extends "base.html" %} {% block content %}
 <section class="page">
   <h2>Shopping Cart</h2>
-  {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-      {% for category, message in messages %}
-        <p class="{{ category }}">{{ message }}</p>
-      {% endfor %}
-    {% endif %}
-  {% endwith %}
+  {% with messages = get_flashed_messages(with_categories=true) %} {% if
+  messages %} {% for category, message in messages %}
+  <p class="{{ category }}">{{ message }}</p>
+  {% endfor %} {% endif %} {% endwith %}
   <div class="cart-layout">
-    <div class="cart-items">
-      {% if items %}
-        {% for item in items %}
-          <div class="cart-item">
-            <img src="{{ item.image_url|default('https://images.unsplash.com/photo-1600267185393-e158a98703de?auto=format&fit=crop&q=80') }}" alt="{{ item.name|default('Item') }}" />
-            <div class="item-details">
-              <p>
-                <strong>{{ item.name|default('Item Name') }}</strong><br />
-                {{ item.description|default('No description available') }}
-              </p>
-              {% if user_type == 'buyer' %}
-                <div class="item-controls">
-                  <span class="delete" data-id="{{ item.id|default(0) }}">🗑️</span>
-                  <label>
-                    Quantity
-                    <select data-id="{{ item.id|default(0) }}">
-                      {% for i in range(1, 6) %}
-                        <option value="{{ i }}" {% if i == item.quantity|default(1) %}selected{% endif %}>{{ i }}</option>
-                      {% endfor %}
-                    </select>
-                  </label>
-                </div>
-              {% endif %}
-            </div>
-            <p class="price">${{ item.price|default('0.00') }}</p>
-          </div>
-        {% endfor %}
+    <div class="cart-items" id="cart-items">
+      <p>Loading cart...</p>
+    </div>
+    <div class="cart-summary" id="cart-summary" style="display: none">
+      <h4>Order Summary</h4>
+      <p>Subtotal <span id="subtotal">₹0.00</span></p>
+      <p>Tax (8%) <span id="tax">₹0.00</span></p>
+      <p>Shipping <span id="shipping">₹500.00</span></p>
+      <hr />
+      <p class="total">Total <span id="total">₹0.00</span></p>
+      {% if user_type == 'buyer' or user_type == 'jeweller' %}
+      <button
+        class="btn-primary"
+        onclick="window.location.href='{{ url_for('checkout') }}'"
+      >
+        🧾 Proceed to Checkout
+      </button>
       {% else %}
-        <p class="empty-message">No items in your cart.</p>
-        {% if user_type == 'guest' %}
-          <p>Sign in to add items to your cart!</p>
-          <a href="{{ url_for('login') }}" class="btn">Login</a>
-          <a href="{{ url_for('signup', user_type='guest') }}" class="btn">Sign Up</a>
-        {% else %}
-          <p>Browse our collection to add items to your cart.</p>
-          <a href="{{ url_for('diamonds') }}" class="btn">Browse Diamonds</a>
-        {% endif %}
+      <p>Sign in to proceed to checkout.</p>
+      <a href="{{ url_for('login') }}" class="btn-primary">Login</a>
       {% endif %}
     </div>
-    {% if items %}
-      <div class="cart-summary">
-        <h4>Order Summary</h4>
-        <p>Subtotal <span>${{ (items|sum(attribute='price')|default(0.0))|round(2) }}</span></p>
-        <p>Tax (8%) <span>${{ ((items|sum(attribute='price')|default(0.0)) * 0.08)|round(2) }}</span></p>
-        <p>Shipping <span>$50.00</span></p>
-        <hr />
-        <p class="total">Total <span>${{ ((items|sum(attribute='price')|default(0.0)) * 1.08 + 50)|round(2) }}</span></p>
-        {% if user_type == 'buyer' %}
-          <a href="#" class="btn">🧾 Proceed to Checkout</a>
-        {% else %}
-          <p>Sign in to proceed to checkout.</p>
-          <a href="{{ url_for('login') }}" class="btn">Login</a>
-        {% endif %}
-      </div>
-    {% endif %}
   </div>
 </section>
+
 <script>
-  // Placeholder for delete and quantity update (to be implemented with API)
-  document.querySelectorAll('.delete').forEach(button => {
-    button.addEventListener('click', () => {
-      alert('Delete functionality not implemented yet.');
-    });
-  });
-  document.querySelectorAll('select').forEach(select => {
-    select.addEventListener('change', () => {
-      alert('Quantity update not implemented yet.');
-    });
-  });
+  async function loadCart() {
+    try {
+      const response = await fetch("/api/cart", {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await response.json();
+      const cartItems = document.getElementById("cart-items");
+      const cartSummary = document.getElementById("cart-summary");
+      const userType = "{{ user_type }}";
+
+      if (data.success && data.items.length > 0) {
+        cartItems.innerHTML = "";
+        let subtotal = 0;
+
+        data.items.forEach((item) => {
+          const price =
+            userType === "jeweller" ? item.wholesale_price : item.inr_value;
+          const itemTotal = price * item.quantity;
+          subtotal += itemTotal;
+
+          const itemDiv = document.createElement("div");
+          itemDiv.className = "cart-item";
+          itemDiv.innerHTML = `
+            <img src="${
+              item.image_url ||
+              "https://images.unsplash.com/photo-1600267185393-e158a98703de?auto=format&fit=crop&q=80"
+            }" alt="${item.shape} Diamond" />
+            <div class="item-details">
+              <p>
+                <strong>${
+                  item.shape.charAt(0).toUpperCase() + item.shape.slice(1)
+                } Diamond</strong><br />
+                Carat: ${item.carat}, Color: ${item.color}, Clarity: ${
+            item.clarity
+          }, Cut: ${item.cut}<br />
+                Stock No: ${item.stock_number || "N/A"}
+              </p>
+              <div class="item-controls">
+                <span class="delete" data-id="${item.id}" onclick="deleteItem(${
+            item.id
+          })">🗑️</span>
+                <label>
+                  Quantity
+                  <select data-id="${item.id}" onchange="updateQuantity(${
+            item.id
+          }, this.value)">
+                    ${[...Array(10).keys()]
+                      .map(
+                        (i) =>
+                          `<option value="${i + 1}" ${
+                            item.quantity === i + 1 ? "selected" : ""
+                          }>${i + 1}</option>`
+                      )
+                      .join("")}
+                  </select>
+                </label>
+              </div>
+            </div>
+            <p class="price">₹${itemTotal.toFixed(2)}</p>
+          `;
+          cartItems.appendChild(itemDiv);
+        });
+
+        const tax = subtotal * 0.08;
+        const shipping = 500;
+        const total = subtotal + tax + shipping;
+
+        document.getElementById("subtotal").textContent = `₹${subtotal.toFixed(
+          2
+        )}`;
+        document.getElementById("tax").textContent = `₹${tax.toFixed(2)}`;
+        document.getElementById("shipping").textContent = `₹${shipping.toFixed(
+          2
+        )}`;
+        document.getElementById("total").textContent = `₹${total.toFixed(2)}`;
+        cartSummary.style.display = "block";
+      } else {
+        cartItems.innerHTML = `
+          <p class="empty-message">No items in your cart.</p>
+          ${
+            userType === "guest"
+              ? `
+            <p>Sign in to add items to your cart!</p>
+            <a href="{{ url_for('login') }}" class="btn-primary">Login</a>
+            <a href="{{ url_for('signup', user_type='guest') }}" class="btn-primary">Sign Up</a>
+          `
+              : `
+            <p>Browse our collection to add items to your cart.</p>
+            <a href="{{ url_for('diamonds') }}" class="btn-primary">Browse Diamonds</a>
+          `
+          }
+        `;
+        cartSummary.style.display = "none";
+      }
+    } catch (err) {
+      console.error("Failed to load cart:", err);
+      document.getElementById("cart-items").innerHTML =
+        "<p>Error loading cart. Please try again.</p>";
+    }
+  }
+
+  async function deleteItem(id) {
+    try {
+      const response = await fetch("/api/cart/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cart_id: id }), // ✅ use id here
+      });
+      const data = await response.json();
+      if (data.success) {
+        loadCart();
+      } else {
+        alert(data.message || "Failed to delete item.");
+      }
+    } catch (err) {
+      console.error("Delete item failed:", err);
+      alert("Failed to delete item. Please try again.");
+    }
+  }
+
+  async function updateQuantity(id, quantity) {
+    try {
+      const response = await fetch("/api/cart/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cart_id: id, quantity: parseInt(quantity) }), // ✅ use id
+      });
+      const data = await response.json();
+      if (data.success) {
+        loadCart();
+      } else {
+        alert(data.message || "Failed to update quantity.");
+      }
+    } catch (err) {
+      console.error("Update quantity failed:", err);
+      alert("Failed to update quantity. Please try again.");
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", loadCart);
 </script>
 {% endblock %}
