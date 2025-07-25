@@ -356,12 +356,260 @@ def load_section_partial(section_name):
         return "Content not found", 404
 
 
+# Add to cart
+@app.route("/api/cart/add", methods=["POST"])
+@role_required("buyer", "jeweller", allow_guest=True)
+def add_to_cart():
+    try:
+        data = request.get_json()
+        diamond_id = data.get("diamond_id")
+        quantity = data.get("quantity", 1)  # Default to 1 if not provided
+
+        if not diamond_id or not isinstance(quantity, int) or quantity < 1:
+            return (
+                jsonify(
+                    {"success": False, "message": "Invalid diamond ID or quantity"}
+                ),
+                400,
+            )
+
+        conn = mysql.connector.connect(**mysql_config)
+        cursor = conn.cursor(dictionary=True)
+
+        # Check if diamond exists and is in stock
+        cursor.execute(
+            "SELECT diamond_id, stock_status, inr_value, wholesale_price FROM diamonds WHERE diamond_id = %s",
+            (diamond_id,),
+        )
+        diamond = cursor.fetchone()
+        if not diamond:
+            cursor.close()
+            conn.close()
+            return jsonify({"success": False, "message": "Diamond not found"}), 404
+        if diamond["stock_status"] != "in_stock":
+            cursor.close()
+            conn.close()
+            return (
+                jsonify({"success": False, "message": "Diamond is out of stock"}),
+                400,
+            )
+
+        # Identify user or session
+        user_id = session.get("user_id")
+        session_id = session.get("session_id", str(uuid.uuid4()))
+        session["session_id"] = session_id
+
+        # Check if item already in cart
+        cursor.execute(
+            """
+            SELECT id, quantity FROM cart 
+            WHERE diamond_id = %s AND (user_id = %s OR session_id = %s)
+            """,
+            (
+                diamond_id,
+                user_id if user_id else None,
+                session_id if not user_id else None,
+            ),
+        )
+        cart_item = cursor.fetchone()
+
+        if cart_item:
+            new_quantity = cart_item["quantity"] + quantity
+            cursor.execute(
+                "UPDATE cart SET quantity = %s WHERE id = %s",
+                (new_quantity, cart_item["id"]),
+            )
+        else:
+            cursor.execute(
+                """
+                INSERT INTO cart (user_id, session_id, diamond_id, quantity, added_at)
+                VALUES (%s, %s, %s, %s, %s)
+                """,
+                (
+                    user_id,
+                    session_id if not user_id else None,
+                    diamond_id,
+                    quantity,
+                    datetime.now(),
+                ),
+            )
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return jsonify(
+            {"success": True, "message": "Added to cart", "redirect": url_for("cart")}
+        )
+    except Error as e:
+        logging.error(f"Error adding to cart: {e}")
+        return jsonify({"success": False, "message": f"Database error: {str(e)}"}), 500
+    except Exception as e:
+        logging.error(f"Unexpected error adding to cart: {e}")
+        return (
+            jsonify({"success": False, "message": f"Unexpected error: {str(e)}"}),
+            500,
+        )
+
+
+# Cart page
 @app.route("/cart")
-@role_required("buyer", allow_guest=True)
+@role_required("buyer", "jeweller", allow_guest=True)
 def cart():
     user_type = session.get("user_type", "guest")
-    items = []
-    return render_template("cart.html", user_type=user_type, items=items)
+    return render_template("cart.html", user_type=user_type)
+
+
+# Get cart items
+@app.route("/api/cart", methods=["GET"])
+@role_required("buyer", "jeweller", allow_guest=True)
+def get_cart():
+    try:
+        user_id = session.get("user_id")
+        user_type = session.get("user_type", "guest")
+        session_id = session.get("session_id")
+        conn = mysql.connector.connect(**mysql_config)
+        cursor = conn.cursor(dictionary=True)
+
+        cursor.execute(
+            """
+            SELECT c.id, c.diamond_id, c.quantity, d.diamond_type, d.shape, d.carat, 
+                   d.color, d.clarity, d.cut, d.inr_value, d.wholesale_price, d.image_url
+            FROM cart c
+            JOIN diamonds d ON c.diamond_id = d.diamond_id
+            WHERE (c.user_id = %s OR c.session_id = %s) AND d.stock_status = 'in_stock'
+            """,
+            (user_id if user_id else None, session_id if not user_id else None),
+        )
+        items = cursor.fetchall()
+        print("jency items", items)
+        # Use wholesale_price for jewellers, inr_value for buyers/guests
+        total_price = sum(
+            (
+                item["wholesale_price"] * item["quantity"]
+                if user_type == "jeweller"
+                else item["inr_value"] * item["quantity"]
+            )
+            for item in items
+        )
+        cursor.close()
+        conn.close()
+        return jsonify(
+            {
+                "success": True,
+                "items": items,
+                "total_price": total_price,
+                "user_type": user_type,
+            }
+        )
+
+    except Error as e:
+        logging.error(f"Error fetching cart: {e}")
+        return jsonify({"error": f"Database error: {str(e)}"}), 500
+
+
+# Delete cart item
+@app.route("/api/cart/delete", methods=["POST"])
+@role_required("buyer", "jeweller", allow_guest=True)
+def delete_cart_item():
+    try:
+        data = request.get_json()
+        cart_id = data.get("cart_id")
+        if not cart_id:
+            return jsonify({"success": False, "message": "Cart ID is required"}), 400
+
+        user_id = session.get("user_id")
+        session_id = session.get("session_id")
+        conn = mysql.connector.connect(**mysql_config)
+        cursor = conn.cursor()
+
+        cursor.execute(
+            """
+            DELETE FROM cart 
+            WHERE id = %s AND (user_id = %s OR session_id = %s)
+            """,
+            (
+                cart_id,
+                user_id if user_id else None,
+                session_id if not user_id else None,
+            ),
+        )
+        if cursor.rowcount == 0:
+            cursor.close()
+            conn.close()
+            return jsonify({"success": False, "message": "Cart item not found"}), 404
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return jsonify({"success": True, "message": "Item removed from cart"})
+    except Error as e:
+        logging.error(f"Error deleting cart item: {e}")
+        return jsonify({"success": False, "message": f"Database error: {str(e)}"}), 500
+
+
+# Update cart item quantity
+@app.route("/api/cart/update", methods=["POST"])
+@role_required("buyer", "jeweller", allow_guest=True)
+def update_cart_quantity():
+    try:
+        data = request.get_json()
+        cart_id = data.get("cart_id")
+        quantity = data.get("quantity")
+        if not cart_id or not isinstance(quantity, int) or quantity < 1:
+            return (
+                jsonify({"success": False, "message": "Invalid cart ID or quantity"}),
+                400,
+            )
+
+        user_id = session.get("user_id")
+        session_id = session.get("session_id")
+        conn = mysql.connector.connect(**mysql_config)
+        cursor = conn.cursor(dictionary=True)
+
+        cursor.execute(
+            """
+            SELECT c.id, c.diamond_id, d.stock_status
+            FROM cart c
+            JOIN diamonds d ON c.diamond_id = d.diamond_id
+            WHERE c.id = %s AND (c.user_id = %s OR c.session_id = %s)
+            """,
+            (
+                cart_id,
+                user_id if user_id else None,
+                session_id if not user_id else None,
+            ),
+        )
+        cart_item = cursor.fetchone()
+        if not cart_item:
+            cursor.close()
+            conn.close()
+            return jsonify({"success": False, "message": "Cart item not found"}), 404
+        if cart_item["stock_status"] != "in_stock":
+            cursor.close()
+            conn.close()
+            return (
+                jsonify({"success": False, "message": "Diamond is out of stock"}),
+                400,
+            )
+
+        cursor.execute(
+            "UPDATE cart SET quantity = %s WHERE id = %s", (quantity, cart_id)
+        )
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return jsonify({"success": True, "message": "Quantity updated"})
+    except Error as e:
+        logging.error(f"Error updating cart quantity: {e}")
+        return jsonify({"success": False, "message": f"Database error: {str(e)}"}), 500
+
+
+# Checkout (placeholder)
+@app.route("/checkout")
+@role_required("buyer", "jeweller")
+def checkout():
+    flash("Checkout functionality not implemented yet.", "info")
+    return redirect(url_for("cart"))
 
 
 @app.route("/wishlist")
