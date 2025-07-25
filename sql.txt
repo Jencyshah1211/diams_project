@@ -150,3 +150,19 @@ CREATE TABLE wishlist (
     INDEX idx_user_id (user_id),
     INDEX idx_diamond_id (diamond_id)
 );
+
+-- cart table
+CREATE TABLE cart (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT, -- Nullable for guest users
+    session_id VARCHAR(36), -- For guest carts
+    diamond_id BIGINT NOT NULL,
+    quantity INT NOT NULL DEFAULT 1,
+    added_at DATETIME,
+    CONSTRAINT fk_cart_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_cart_diamond FOREIGN KEY (diamond_id) REFERENCES diamonds(diamond_id) ON DELETE CASCADE,
+    CONSTRAINT unique_cart_item UNIQUE (user_id, session_id, diamond_id),
+    INDEX idx_user_id (user_id),
+    INDEX idx_session_id (session_id),
+    INDEX idx_diamond_id (diamond_id)
+);
