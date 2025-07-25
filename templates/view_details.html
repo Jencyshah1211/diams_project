@@ -36,7 +36,10 @@
         {% endif %} {% if item.stock_number %}
         <p><strong>Stock No:</strong> {{ item.stock_number }}</p>
         {% endif %}
-        <p><strong>Price:</strong> ₹{{ item.inr_value }}</p>
+        <p>
+          <strong>Price:</strong> ₹{{ item.wholesale_price if user_type ==
+          'jeweller' else item.inr_value }}
+        </p>
       </div>
     </div>
     <div class="button-group">
@@ -48,22 +51,63 @@
         ></i>
       </div>
       {% endif %}
-      <a href="{{ url_for('cart') }}" class="btn-primary"
-        ><i class="fa-solid fa-cart-plus"></i> Add to Cart</a
+      <div id="cart-action">
+        <button class="btn-primary" onclick="addToCart({{ item.diamond_id }})">
+          <i class="fa-solid fa-cart-plus"></i> Add to Cart
+        </button>
+      </div>
+
+      <button
+        class="btn-primary"
+        onclick="window.location.href='{{ url_for('diamonds') }}'"
       >
-      <a href="{{ url_for('diamonds') }}" class="btn-primary"
-        ><i class="fa fa-gem"></i> Diamonds</a
-      >
+        <i class="fa fa-gem"></i> Diamonds
+      </button>
       {% if user_type == "buyer" %}
-      <a href="{{ url_for('wishlist') }}" class="btn-primary"
-        ><i class="fa fa-heart"></i> Wishlist</a
+      <button
+        class="btn-primary"
+        onclick="window.location.href='{{ url_for('wishlist') }}'"
       >
+        <i class="fa fa-heart"></i> Wishlist
+      </button>
       {% endif %}
     </div>
   </div>
 </section>
 
 <script>
+  window.addToCart = async function (diamondId) {
+    if (window.addToCart.isProcessing) return;
+    window.addToCart.isProcessing = true;
+
+    try {
+      console.log("Attempting to add to cart, diamondId:", diamondId);
+      const response = await fetch("/api/cart/add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ diamond_id: diamondId, quantity: 1 }),
+      });
+      const data = await response.json();
+      console.log("Add to cart response:", data);
+      if (data.success) {
+        // Change button to "Go to Cart" link
+        const cartAction = document.getElementById("cart-action");
+        cartAction.innerHTML = `
+          <a href="{{ url_for('cart') }}" class="btn-primary">
+            <i class="fa-solid fa-cart-shopping"></i> Go to Cart
+          </a>
+        `;
+      } else {
+        alert(data.message);
+      }
+    } catch (err) {
+      console.error("Add to cart failed:", err);
+      alert("Failed to add to cart. Please try again.");
+    } finally {
+      window.addToCart.isProcessing = false;
+    }
+  };
+  window.addToCart.isProcessing = false;
   document.addEventListener("DOMContentLoaded", function () {
     let isProcessing = false;
 
